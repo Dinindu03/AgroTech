@@ -13,31 +13,58 @@ import {
   ListItemText,
 } from "@mui/material";
 
+import { Link, useNavigate } from "react-router-dom";
+
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
 
 const navItems = [
-  "Home",
-  "Products",
-  "Services",
-  "Farmers",
-  "Contact",
+  { name: "Home", id: "home" },
+  { name: "About Us", id: "about" },
+  { name: "Products", id: "products" },
+  { name: "Services", id: "services" },
+  { name: "Farming Problems", id: "problems" },
+  { name: "Knowledge Hub", id: "knowledge" },
+  { name: "Contact", id: "contact" },
 ];
 
 const Navbar = () => {
+  const navigate = useNavigate();
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("Home");
 
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const handleScroll = (id, name) => {
+    setActiveItem(name);
+
+    const section = document.getElementById(id);
+
+    if (section) {
+      section.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+
+    setDrawerOpen(false);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    navigate("/login");
+    window.location.reload();
+  };
+
   return (
     <>
-      {/* ================= NAVBAR ================= */}
       <AppBar
         position="sticky"
         elevation={0}
         sx={{
-          background: "rgba(255,255,255,0.75)",
+          background: "rgba(255,255,255,0.8)",
           backdropFilter: "blur(14px)",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
           color: "#111",
         }}
       >
@@ -46,17 +73,16 @@ const Navbar = () => {
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              minHeight: { xs: "74px", md: "82px" },
-              px: "0 !important",
+              minHeight: "80px",
+              px: 0,
             }}
           >
-            {/* LOGO / BRAND */}
+            {/* Logo */}
             <Box>
               <Typography
                 sx={{
-                  fontSize: { xs: "24px", md: "30px" },
+                  fontSize: "30px",
                   fontWeight: 900,
-                  letterSpacing: "-1px",
                   color: "#1b5e20",
                   lineHeight: 1,
                 }}
@@ -70,14 +96,13 @@ const Navbar = () => {
                   color: "#6b7280",
                   letterSpacing: "2px",
                   textTransform: "uppercase",
-                  mt: 0.5,
                 }}
               >
                 Smart Agriculture
               </Typography>
             </Box>
 
-            {/* DESKTOP MENU */}
+            {/* Desktop Menu */}
             <Box
               sx={{
                 display: { xs: "none", md: "flex" },
@@ -87,62 +112,134 @@ const Navbar = () => {
             >
               {navItems.map((item) => (
                 <Button
-                  key={item}
-                  onClick={() => setActiveItem(item)}
+                  key={item.name}
+                  onClick={() =>
+                    handleScroll(item.id, item.name)
+                  }
                   sx={{
                     color:
-                      activeItem === item ? "#ffffff" : "#374151",
+                      activeItem === item.name
+                        ? "#fff"
+                        : "#374151",
 
                     backgroundColor:
-                      activeItem === item
+                      activeItem === item.name
                         ? "#1b5e20"
                         : "transparent",
 
                     textTransform: "none",
                     fontWeight: 600,
-                    fontSize: "15px",
-                    px: 2.2,
-                    py: 1,
-                    borderRadius: "14px",
-                    transition: "0.25s ease",
+                    borderRadius: "12px",
+                    px: 2,
 
                     "&:hover": {
                       backgroundColor:
-                        activeItem === item
+                        activeItem === item.name
                           ? "#1b5e20"
                           : "#f3f4f6",
                     },
                   }}
                 >
-                  {item}
+                  {item.name}
                 </Button>
               ))}
 
-              {/* CTA BUTTON */}
+              {/* Shop Button */}
               <Button
                 sx={{
                   ml: 1,
                   background:
-                    "linear-gradient(135deg, #2e7d32, #43a047)",
+                    "linear-gradient(135deg,#2e7d32,#43a047)",
                   color: "#fff",
                   textTransform: "none",
                   fontWeight: 700,
                   px: 3,
-                  py: 1,
-                  borderRadius: "14px",
-                  boxShadow: "0 8px 24px rgba(46,125,50,0.25)",
+                  borderRadius: "12px",
 
                   "&:hover": {
                     background:
-                      "linear-gradient(135deg, #1b5e20, #2e7d32)",
+                      "linear-gradient(135deg,#1b5e20,#2e7d32)",
                   },
                 }}
               >
                 Shop Now
               </Button>
+
+              {/* Auth Section */}
+              {!user ? (
+                <>
+                  <Button
+                    component={Link}
+                    to="/login"
+                    sx={{
+                      ml: 1,
+                      background: "#4caf50",
+                      color: "#fff",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: "12px",
+
+                      "&:hover": {
+                        background: "#388e3c",
+                      },
+                    }}
+                  >
+                    Login
+                  </Button>
+
+                  <Button
+                    component={Link}
+                    to="/signup"
+                    sx={{
+                      ml: 1,
+                      background: "#616161",
+                      color: "#fff",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: "12px",
+
+                      "&:hover": {
+                        background: "#424242",
+                      },
+                    }}
+                  >
+                    Sign Up
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Typography
+                    sx={{
+                      ml: 2,
+                      fontWeight: "bold",
+                      color: "#1b5e20",
+                    }}
+                  >
+                    {user.name}
+                  </Typography>
+
+                  <Button
+                    onClick={handleLogout}
+                    sx={{
+                      ml: 1,
+                      background: "#d32f2f",
+                      color: "#fff",
+                      textTransform: "none",
+                      fontWeight: 700,
+                      borderRadius: "12px",
+
+                      "&:hover": {
+                        background: "#b71c1c",
+                      },
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              )}
             </Box>
 
-            {/* MOBILE MENU BUTTON */}
+            {/* Mobile Menu Icon */}
             <IconButton
               onClick={() => setDrawerOpen(true)}
               sx={{
@@ -156,106 +253,92 @@ const Navbar = () => {
         </Container>
       </AppBar>
 
-      {/* ================= MOBILE DRAWER ================= */}
+      {/* Mobile Drawer */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 280,
-            background: "#ffffff",
-            borderTopLeftRadius: "24px",
-            borderBottomLeftRadius: "24px",
-            p: 2,
-          },
-        }}
       >
-        {/* TOP */}
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 4,
-          }}
-        >
-          <Typography
+        <Box sx={{ width: 280, p: 2 }}>
+          <Box
             sx={{
-              fontSize: "24px",
-              fontWeight: 800,
-              color: "#1b5e20",
+              display: "flex",
+              justifyContent: "space-between",
+              mb: 3,
             }}
           >
-            TechAgro
-          </Typography>
-
-          <IconButton onClick={() => setDrawerOpen(false)}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-
-        {/* MOBILE NAV ITEMS */}
-        <List>
-          {navItems.map((item) => (
-            <ListItemButton
-              key={item}
-              onClick={() => {
-                setActiveItem(item);
-                setDrawerOpen(false);
-              }}
+            <Typography
               sx={{
-                borderRadius: "14px",
-                mb: 1,
-                backgroundColor:
-                  activeItem === item
-                    ? "#1b5e20"
-                    : "transparent",
-
-                "&:hover": {
-                  backgroundColor:
-                    activeItem === item
-                      ? "#1b5e20"
-                      : "#f3f4f6",
-                },
+                fontWeight: "bold",
+                color: "#1b5e20",
               }}
             >
-              <ListItemText
-                primary={item}
-                primaryTypographyProps={{
-                  fontSize: "15px",
-                  fontWeight: 600,
-                  color:
-                    activeItem === item
-                      ? "#fff"
-                      : "#374151",
+              TechAgro
+            </Typography>
+
+            <IconButton
+              onClick={() => setDrawerOpen(false)}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          <List>
+            {navItems.map((item) => (
+              <ListItemButton
+                key={item.name}
+                onClick={() =>
+                  handleScroll(item.id, item.name)
+                }
+              >
+                <ListItemText primary={item.name} />
+              </ListItemButton>
+            ))}
+          </List>
+
+          {!user ? (
+            <>
+              <Button
+                fullWidth
+                component={Link}
+                to="/login"
+                sx={{ mt: 2 }}
+              >
+                Login
+              </Button>
+
+              <Button
+                fullWidth
+                component={Link}
+                to="/signup"
+                sx={{ mt: 1 }}
+              >
+                Sign Up
+              </Button>
+            </>
+          ) : (
+            <>
+              <Typography
+                sx={{
+                  mt: 2,
+                  textAlign: "center",
+                  fontWeight: "bold",
                 }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
+              >
+                {user.name}
+              </Typography>
 
-        {/* MOBILE CTA */}
-        <Button
-          fullWidth
-          sx={{
-            mt: 3,
-            background:
-              "linear-gradient(135deg, #2e7d32, #43a047)",
-            color: "#fff",
-            textTransform: "none",
-            fontWeight: 700,
-            py: 1.4,
-            borderRadius: "14px",
-
-            "&:hover": {
-              background:
-                "linear-gradient(135deg, #1b5e20, #2e7d32)",
-            },
-          }}
-        >
-          Shop Now
-        </Button>
+              <Button
+                fullWidth
+                color="error"
+                onClick={handleLogout}
+                sx={{ mt: 2 }}
+              >
+                Logout
+              </Button>
+            </>
+          )}
+        </Box>
       </Drawer>
     </>
   );
