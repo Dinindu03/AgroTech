@@ -7,7 +7,7 @@ import {
   Button,
 } from "@mui/material";
 
-import heroImage from "../assets/hero.jpg";
+import heroImage from "../assets/AboutUs.jpg";
 
 function AboutUs() {
   return (

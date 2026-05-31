@@ -21,10 +21,10 @@ import CloseIcon from "@mui/icons-material/Close";
 const navItems = [
   { name: "Home", id: "home" },
   { name: "About Us", id: "about" },
-  { name: "Products", id: "products" },
-  { name: "Services", id: "services" },
+  { name: "Product & Service", id: "productandservice" },
+  
   { name: "Farming Problems", id: "problems" },
-  { name: "Knowledge Hub", id: "knowledge" },
+  { name: "Knowledge Hub", id: "knowledgehub" },
   { name: "Contact", id: "contact" },
 ];
 
@@ -36,19 +36,30 @@ const Navbar = () => {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-  const handleScroll = (id, name) => {
-    setActiveItem(name);
+const handleScroll = (id, name) => {
+  setActiveItem(name);
 
-    const section = document.getElementById(id);
-
-    if (section) {
-      section.scrollIntoView({
-        behavior: "smooth",
-      });
-    }
+  // If not on Home page
+  if (window.location.pathname !== "/") {
+    navigate("/", {
+      state: { scrollTo: id },
+    });
 
     setDrawerOpen(false);
-  };
+    return;
+  }
+
+  const section = document.getElementById(id);
+
+  if (section) {
+    section.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  setDrawerOpen(false);
+};
 
   const handleLogout = () => {
     localStorage.removeItem("user");

@@ -21,7 +21,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 
 import Navbar from "../components/Navbar";
-
+import ProductAndService from "../assets/problems.jpg";
 const SignUp = () => {
   const navigate = useNavigate();
 
@@ -79,9 +79,14 @@ const SignUp = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        background:
-          "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?q=80&w=1974&auto=format&fit=crop')",
-        backgroundSize: "cover",
+         backgroundImage: `
+                  linear-gradient(
+                    rgba(0,0,0,0.3),
+                    rgba(0,0,0,0.3)
+                  ),
+                  url(${ProductAndService})
+                `,
+                 backgroundSize: "cover",
         backgroundPosition: "center",
         py: 5,
       }}
