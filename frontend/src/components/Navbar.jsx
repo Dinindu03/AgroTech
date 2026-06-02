@@ -11,6 +11,10 @@ import {
   List,
   ListItemButton,
   ListItemText,
+  Avatar,
+  Menu,
+  MenuItem,
+  Divider,
 } from "@mui/material";
 
 import { Link, useNavigate } from "react-router-dom";
@@ -22,49 +26,56 @@ const navItems = [
   { name: "Home", id: "home" },
   { name: "About Us", id: "about" },
   { name: "Product & Service", id: "productandservice" },
-  
   { name: "Farming Problems", id: "problems" },
   { name: "Knowledge Hub", id: "knowledgehub" },
   { name: "Contact", id: "contact" },
 ];
 
-const Navbar = () => {
+export default function Navbar() {
   const navigate = useNavigate();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("Home");
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
-const handleScroll = (id, name) => {
-  setActiveItem(name);
+  const handleScroll = (id, name) => {
+    setActiveItem(name);
 
-  // If not on Home page
-  if (window.location.pathname !== "/") {
-    navigate("/", {
-      state: { scrollTo: id },
-    });
+    if (window.location.pathname !== "/") {
+      navigate("/", {
+        state: { scrollTo: id },
+      });
+
+      setDrawerOpen(false);
+      return;
+    }
+
+    const section = document.getElementById(id);
+
+    if (section) {
+      section.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
 
     setDrawerOpen(false);
-    return;
-  }
-
-  const section = document.getElementById(id);
-
-  if (section) {
-    section.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  }
-
-  setDrawerOpen(false);
-};
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/login");
     window.location.reload();
+  };
+
+  const openMenu = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const closeMenu = () => {
+    setAnchorEl(null);
   };
 
   return (
@@ -73,8 +84,8 @@ const handleScroll = (id, name) => {
         position="sticky"
         elevation={0}
         sx={{
-          background: "rgba(255,255,255,0.8)",
-          backdropFilter: "blur(14px)",
+          background: "rgba(255,255,255,0.9)",
+          backdropFilter: "blur(12px)",
           borderBottom: "1px solid rgba(0,0,0,0.08)",
           color: "#111",
         }}
@@ -82,20 +93,17 @@ const handleScroll = (id, name) => {
         <Container maxWidth="xl">
           <Toolbar
             sx={{
-              display: "flex",
               justifyContent: "space-between",
               minHeight: "80px",
-              px: 0,
             }}
           >
             {/* Logo */}
             <Box>
               <Typography
                 sx={{
-                  fontSize: "30px",
+                  fontSize: 30,
                   fontWeight: 900,
                   color: "#1b5e20",
-                  lineHeight: 1,
                 }}
               >
                 TechAgro
@@ -103,9 +111,9 @@ const handleScroll = (id, name) => {
 
               <Typography
                 sx={{
-                  fontSize: "12px",
+                  fontSize: 11,
                   color: "#6b7280",
-                  letterSpacing: "2px",
+                  letterSpacing: 2,
                   textTransform: "uppercase",
                 }}
               >
@@ -128,6 +136,11 @@ const handleScroll = (id, name) => {
                     handleScroll(item.id, item.name)
                   }
                   sx={{
+                    textTransform: "none",
+                    fontWeight: 600,
+                    borderRadius: "12px",
+                    px: 2,
+
                     color:
                       activeItem === item.name
                         ? "#fff"
@@ -137,11 +150,6 @@ const handleScroll = (id, name) => {
                       activeItem === item.name
                         ? "#1b5e20"
                         : "transparent",
-
-                    textTransform: "none",
-                    fontWeight: 600,
-                    borderRadius: "12px",
-                    px: 2,
 
                     "&:hover": {
                       backgroundColor:
@@ -155,7 +163,6 @@ const handleScroll = (id, name) => {
                 </Button>
               ))}
 
-              {/* Shop Button */}
               <Button
                 sx={{
                   ml: 1,
@@ -164,8 +171,8 @@ const handleScroll = (id, name) => {
                   color: "#fff",
                   textTransform: "none",
                   fontWeight: 700,
-                  px: 3,
                   borderRadius: "12px",
+                  px: 3,
 
                   "&:hover": {
                     background:
@@ -176,23 +183,16 @@ const handleScroll = (id, name) => {
                 Shop Now
               </Button>
 
-              {/* Auth Section */}
+              {/* User Section */}
               {!user ? (
                 <>
                   <Button
                     component={Link}
                     to="/login"
+                    variant="contained"
                     sx={{
                       ml: 1,
                       background: "#4caf50",
-                      color: "#fff",
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: "12px",
-
-                      "&:hover": {
-                        background: "#388e3c",
-                      },
                     }}
                   >
                     Login
@@ -201,17 +201,9 @@ const handleScroll = (id, name) => {
                   <Button
                     component={Link}
                     to="/signup"
+                    variant="contained"
                     sx={{
-                      ml: 1,
                       background: "#616161",
-                      color: "#fff",
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: "12px",
-
-                      "&:hover": {
-                        background: "#424242",
-                      },
                     }}
                   >
                     Sign Up
@@ -219,43 +211,51 @@ const handleScroll = (id, name) => {
                 </>
               ) : (
                 <>
-                  <Typography
-                    sx={{
-                      ml: 2,
-                      fontWeight: "bold",
-                      color: "#1b5e20",
-                    }}
-                  >
-                    {user.name}
-                  </Typography>
+                  <IconButton onClick={openMenu}>
+                    <Avatar
+                      sx={{
+                        bgcolor: "#2e7d32",
+                        width: 42,
+                        height: 42,
+                      }}
+                    >
+                      {user.name?.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </IconButton>
 
-                  <Button
-                    onClick={handleLogout}
-                    sx={{
-                      ml: 1,
-                      background: "#d32f2f",
-                      color: "#fff",
-                      textTransform: "none",
-                      fontWeight: 700,
-                      borderRadius: "12px",
-
-                      "&:hover": {
-                        background: "#b71c1c",
-                      },
-                    }}
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={closeMenu}
                   >
-                    Logout
-                  </Button>
+                    <Box sx={{ px: 2, py: 1 }}>
+                      <Typography fontWeight="bold">
+                        {user.name}
+                      </Typography>
+
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                      >
+                        {user.email}
+                      </Typography>
+                    </Box>
+
+                    <Divider />
+
+                    <MenuItem onClick={handleLogout}>
+                      Logout
+                    </MenuItem>
+                  </Menu>
                 </>
               )}
             </Box>
 
-            {/* Mobile Menu Icon */}
+            {/* Mobile Menu */}
             <IconButton
               onClick={() => setDrawerOpen(true)}
               sx={{
                 display: { xs: "flex", md: "none" },
-                color: "#1b5e20",
               }}
             >
               <MenuIcon />
@@ -264,7 +264,7 @@ const handleScroll = (id, name) => {
         </Container>
       </AppBar>
 
-      {/* Mobile Drawer */}
+      {/* Drawer */}
       <Drawer
         anchor="right"
         open={drawerOpen}
@@ -275,14 +275,12 @@ const handleScroll = (id, name) => {
             sx={{
               display: "flex",
               justifyContent: "space-between",
-              mb: 3,
+              mb: 2,
             }}
           >
             <Typography
-              sx={{
-                fontWeight: "bold",
-                color: "#1b5e20",
-              }}
+              fontWeight="bold"
+              color="#1b5e20"
             >
               TechAgro
             </Typography>
@@ -311,6 +309,7 @@ const handleScroll = (id, name) => {
             <>
               <Button
                 fullWidth
+                variant="contained"
                 component={Link}
                 to="/login"
                 sx={{ mt: 2 }}
@@ -320,6 +319,7 @@ const handleScroll = (id, name) => {
 
               <Button
                 fullWidth
+                variant="contained"
                 component={Link}
                 to="/signup"
                 sx={{ mt: 1 }}
@@ -328,31 +328,43 @@ const handleScroll = (id, name) => {
               </Button>
             </>
           ) : (
-            <>
-              <Typography
+            <Box sx={{ textAlign: "center", mt: 3 }}>
+              <Avatar
                 sx={{
-                  mt: 2,
-                  textAlign: "center",
-                  fontWeight: "bold",
+                  bgcolor: "#2e7d32",
+                  width: 70,
+                  height: 70,
+                  mx: "auto",
+                  mb: 1,
                 }}
               >
+                {user.name?.charAt(0).toUpperCase()}
+              </Avatar>
+
+              <Typography fontWeight="bold">
                 {user.name}
+              </Typography>
+
+              <Typography
+                variant="body2"
+                color="text.secondary"
+              >
+                {user.email}
               </Typography>
 
               <Button
                 fullWidth
                 color="error"
-                onClick={handleLogout}
+                variant="contained"
                 sx={{ mt: 2 }}
+                onClick={handleLogout}
               >
                 Logout
               </Button>
-            </>
+            </Box>
           )}
         </Box>
       </Drawer>
     </>
   );
-};
-
-export default Navbar;
+}

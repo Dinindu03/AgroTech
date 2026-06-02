@@ -10,6 +10,12 @@ import {
 import heroImage from "../assets/AboutUs.jpg";
 
 function AboutUs() {
+
+  const handleNavigation = () => {
+    // This tells the browser to drop its current memory state, go to /about, and reload completely
+    window.location.href = "/about"; 
+  };
+  
   return (
     <Box sx={{ background: "#f5f7f2" }}>
       
@@ -94,8 +100,8 @@ function AboutUs() {
             
 
             <Button
-  component={Link}
-  to="/about"
+  onClick={handleNavigation}
+  
   variant="outlined"
   sx={{
     borderColor: "rgba(255, 255, 255, 0.8)",
