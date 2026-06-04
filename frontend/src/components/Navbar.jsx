@@ -208,6 +208,17 @@ export default function Navbar() {
                   >
                     Sign Up
                   </Button>
+                  <Button
+                          component={Link}
+                          to="/admindashboard"
+                          variant="contained"
+                          sx={{
+                            background: "#1b5e20",
+                          }}
+                        >
+                          Admin Dashboard
+                        </Button>
+                  
                 </>
               ) : (
                 <>
@@ -326,6 +337,7 @@ export default function Navbar() {
               >
                 Sign Up
               </Button>
+             
             </>
           ) : (
             <Box sx={{ textAlign: "center", mt: 3 }}>
