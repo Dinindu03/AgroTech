@@ -2,7 +2,33 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db");
 
-// Add Product
+// ===============================
+// GET ALL PRODUCTS
+// ===============================
+router.get("/all", (req, res) => {
+  const sql = "SELECT * FROM products ORDER BY date DESC";
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Fetch Error:", err);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch products",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      count: results.length,
+      products: results,
+    });
+  });
+});
+
+// ===============================
+// ADD PRODUCT
+// ===============================
 router.post("/add", (req, res) => {
   const {
     id,
@@ -18,36 +44,67 @@ router.post("/add", (req, res) => {
     image,
   } = req.body;
 
-  // Validation
-  if (!id || !name || !category || !price || !stock) {
+  if (
+    !id ||
+    !name ||
+    !category ||
+    price === "" ||
+    stock === ""
+  ) {
     return res.status(400).json({
-      message: "Please fill required fields",
+      success: false,
+      message: "Required fields are missing",
     });
   }
 
   const sql = `
-    INSERT INTO products 
-    (id, name, brand, category, price, stock, supplier, enteredBy, date, description, image)
+    INSERT INTO products
+    (
+      id,
+      name,
+      brand,
+      category,
+      price,
+      stock,
+      supplier,
+      enteredBy,
+      date,
+      description,
+      image
+    )
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
-  db.query(
-    sql,
-    [id, name, brand, category, price, stock, supplier, enteredBy, date, description, image],
-    (err, result) => {
-      if (err) {
-        console.log("DB Error:", err);
-        return res.status(500).json({
-          message: "Database Error",
-        });
-      }
+  const values = [
+    id,
+    name,
+    brand,
+    category,
+    price,
+    stock,
+    supplier,
+    enteredBy,
+    date,
+    description,
+    image,
+  ];
 
-      res.status(201).json({
-        message: "Product Added Successfully",
-        productId: result.insertId,
+  db.query(sql, values, (err, result) => {
+    if (err) {
+      console.error("Insert Error:", err);
+
+      return res.status(500).json({
+        success: false,
+        message: "Failed to add product",
       });
     }
-  );
+
+    res.status(201).json({
+      success: true,
+      message: "Product Added Successfully",
+      insertedId: result.insertId,
+    });
+  });
 });
 
 module.exports = router;
