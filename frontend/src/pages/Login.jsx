@@ -38,32 +38,36 @@ function Login() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await axios.post(
-        "http://localhost:5000/api/users/login",
-        formData
-      );
-
-      if (res.data.success) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify(res.data.user)
-        );
-
-        alert("Login Successful");
-        navigate("/");
+  try {
+    const res = await axios.post(
+      "http://localhost:5000/api/users/login",
+      {
+        email: formData.email,
+        password: formData.password,
       }
-    } catch (error) {
-      console.error(error);
+    );
 
-      alert(
-        error.response?.data?.message ||
-          "Invalid Email or Password"
-      );
-    }
-  };
+    // Save logged user
+    localStorage.setItem(
+      "user",
+      JSON.stringify(res.data.user)
+    );
+
+    alert("Login Successful");
+
+    // Redirect Home
+    navigate("/");
+  } catch (error) {
+    console.error("Login Error:", error);
+
+    alert(
+      error.response?.data?.message ||
+      "Invalid Email or Password"
+    );
+  }
+};
 
   return (
     <Box

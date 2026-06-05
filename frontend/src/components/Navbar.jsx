@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -37,37 +37,45 @@ export default function Navbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeItem, setActiveItem] = useState("Home");
   const [anchorEl, setAnchorEl] = useState(null);
+  const [user, setUser] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  // Sync user status on mount safely
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user session metadata profile.", e);
+      }
+    }
+  }, []);
 
   const handleScroll = (id, name) => {
     setActiveItem(name);
 
     if (window.location.pathname !== "/") {
-      navigate("/", {
-        state: { scrollTo: id },
-      });
-
+      navigate("/", { state: { scrollTo: id } });
       setDrawerOpen(false);
       return;
     }
 
     const section = document.getElementById(id);
-
     if (section) {
       section.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
     }
-
     setDrawerOpen(false);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    navigate("/login");
-    window.location.reload();
+    setUser(null);
+    setAnchorEl(null);
+    setDrawerOpen(false);
+    navigate("/");
   };
 
   const openMenu = (event) => {
@@ -80,6 +88,7 @@ export default function Navbar() {
 
   return (
     <>
+    
       <AppBar
         position="sticky"
         elevation={0}
