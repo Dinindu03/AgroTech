@@ -16,7 +16,7 @@ router.get("/all", (req, res) => {
         success: false,
         message: "Failed to fetch products",
       });
-    }
+    } 
 
     res.status(200).json({
       success: true,
