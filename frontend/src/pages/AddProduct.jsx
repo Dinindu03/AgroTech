@@ -11,66 +11,106 @@ import {
   InputAdornment,
 } from "@mui/material";
 
-import AdminSidebar from "../components/AdminNavbar"; 
+import AdminSidebar from "../components/AdminNavbar";
+
+// Helper function positioned outside the component scope to avoid redeclaring on render
+const generateProductId = () => {
+  const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
+  return `PROD-${randomHex}`;
+};
+
+// Safe helper to extract admin name handling nested backend payload structures
+const getAdminName = () => {
+  try {
+    const loggedUser = JSON.parse(localStorage.getItem("admin"));
+    // Handles { name: "John" } OR nested structures like { admin: { name: "John" } }
+    return loggedUser?.name || loggedUser?.admin?.name || "Admin";
+  } catch (e) {
+    return "Admin";
+  }
+};
 
 export default function AddProduct() {
   const today = new Date().toISOString().split("T")[0];
 
-  const generateProductId = () => {
-    const randomHex = Math.random().toString(16).substring(2, 6).toUpperCase();
-    return `PROD-${randomHex}`;
-  };
-
   const [product, setProduct] = useState({
-    id: "",
+    id: generateProductId(), 
     name: "",
     brand: "",
     category: "",
-    price: "",
+    price: "", 
     stock: "",
     supplier: "",
-    enteredBy: "",
+    enteredBy: getAdminName(), // Pulls name securely on initial load
     date: today,
     description: "",
-    image: null,
+    image: null, 
   });
 
   const [preview, setPreview] = useState("");
 
+  // Manage memory cleanup for image object URLs
   useEffect(() => {
-    setProduct((prev) => ({
-      ...prev,
-      id: generateProductId(),
-    }));
-  }, []);
+    return () => {
+      if (preview) URL.revokeObjectURL(preview);
+    };
+  }, [preview]);
 
   const handleChange = (e) => {
-    setProduct({
-      ...product,
+    setProduct((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setProduct({
-        ...product,
-        image: file.name, 
-      });
+      if (preview) URL.revokeObjectURL(preview);
+
+      setProduct((prev) => ({
+        ...prev,
+        image: file, 
+      }));
       setPreview(URL.createObjectURL(file));
     }
+  };
+
+  const handleRemoveImage = () => {
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview("");
+    setProduct((prev) => ({ ...prev, image: null }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let payload;
+      let headers = { "Content-Type": "application/json" };
+
+      if (product.image instanceof File) {
+        headers = { "Content-Type": "multipart/form-data" };
+        payload = new FormData();
+        Object.keys(product).forEach((key) => {
+          payload.append(key, product[key]);
+        });
+      } else {
+        payload = product;
+      }
+
       const response = await axios.post(
         "http://localhost:5000/api/products/add",
-        product
+        payload,
+        { headers }
       );
-      alert(response.data.message);
+      
+      alert(response.data?.message || "Product Saved Successfully");
 
+      // Clean up the image preview memory allocation
+      if (preview) URL.revokeObjectURL(preview);
+      setPreview("");
+      
+      // RESET FORM: Notice getAdminName() is run again to guarantee data is preserved
       setProduct({
         id: generateProductId(),
         name: "",
@@ -79,22 +119,21 @@ export default function AddProduct() {
         price: "",
         stock: "",
         supplier: "",
-        enteredBy: "",
+        enteredBy: getAdminName(), 
         date: today,
         description: "",
         image: null,
       });
-      setPreview("");
     } catch (error) {
-      console.log(error);
-      alert("Error saving product");
+      console.error(error);
+      alert(error.response?.data?.message || "Error saving product");
     }
   };
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
       {/* Sidebar Navigation */}
-      <AdminSidebar /> 
+      <AdminSidebar />  
 
       {/* Primary Layout Engine */}
       <Box 
@@ -132,7 +171,7 @@ export default function AddProduct() {
             </Typography>
           </Box>
 
-          <form onSubmit={handleSubmit}>
+          <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={4}>
 
               {/* LEFT COLUMN: Core Metadata Fields */}
@@ -236,13 +275,14 @@ export default function AddProduct() {
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
-                    <TextField 
-                      fullWidth 
-                      label="Entered By" 
-                      name="enteredBy" 
-                      value={product.enteredBy} 
-                      onChange={handleChange} 
-                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
+                    <TextField
+                      fullWidth
+                      label="Entered By"
+                      value={product.enteredBy}
+                      InputProps={{
+                        readOnly: true,
+                      }}
+                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: "#f8fafc" } }}
                     />
                   </Grid>
 
@@ -325,7 +365,7 @@ export default function AddProduct() {
                         variant="text"
                         color="error"
                         size="small"
-                        onClick={() => setPreview("")}
+                        onClick={handleRemoveImage}
                         sx={{ textTransform: "none", mt: 1, fontWeight: 600 }}
                       >
                         Remove Image
@@ -357,7 +397,7 @@ export default function AddProduct() {
 
               </Grid>
             </Grid>
-          </form>
+          </Box>
         </Paper>
       </Box>
     </Box>

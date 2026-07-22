@@ -92,7 +92,7 @@ router.post("/login", (req, res) => {
   );
 });
 
-// Get All Users
+
 router.get("/", (req, res) => {
   db.query(
     "SELECT * FROM user",

@@ -77,7 +77,14 @@ function HeroPage() {
 }, []);
 
   return (
-    <Box>
+    <Box
+     sx={{
+    width: "100%",
+    minHeight: "100vh",
+    margin: 0,
+    padding: 0,
+  }}
+    >
      
 
       {/* ================= HERO SECTION ================= */}

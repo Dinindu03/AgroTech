@@ -83,7 +83,7 @@ function AboutUs() {
               mb: 5,
             }}
           >
-            TechAgro is transforming traditional farming with
+            AgroTech is transforming traditional farming with
             smart agriculture technologies, IoT solutions,
             innovative farming products, and sustainable digital
             services designed for modern farmers.

@@ -1,13 +1,12 @@
 import React from "react";
 import {
   Box,
-  AppBar,
   Toolbar,
   Typography,
   Grid,
   Paper,
   Card,
-  useTheme,
+  CardContent,
 } from "@mui/material";
 
 import {
@@ -22,11 +21,18 @@ import {
   Cell,
   Legend,
 } from "recharts";
+
+// Premium Outlined Modern UI Vector Icons
+import ShoppingBagIcon from "@mui/icons-material/ShoppingBagOutlined";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLongOutlined";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOnOutlined";
+import LayersIcon from "@mui/icons-material/LayersOutlined";
+
 import AdminSidebar from "../components/AdminNavbar"; 
 
-const drawerWidth = 240;
+const SIDEBAR_WIDTH = 260; // Sync layout framework spacing
 
-// Mock Data Engine for analytical layout render
+// Data Engines
 const revenueData = [
   { month: "Jan", revenue: 45000 },
   { month: "Feb", revenue: 95000 },
@@ -43,179 +49,129 @@ const categoryDistribution = [
   { name: "Plants", value: 100 },
 ];
 
-// Aesthetic clean hex palette matching TechAgro parameters
-const COLORS = ["#1B5E20", "#43A047", "#81C784", "#C8E6C9"];
+// Luxury TechAgro Color Palette matching modern dark/emerald themes
+const COLORS = ["#22c55e", "#10b981", "#34d399", "#a7f3d0"];
 
 export default function AdminDashboard() {
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
-      {/* Reusable Sidebar component */}
+      {/* Permanent Anchor Navigation Sidebar */}
       <AdminSidebar />
 
-      {/* Main Framework Block */}
+      {/* Main Framework Viewport Workspace */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          width: `calc(100% - ${drawerWidth}px)`,
-          minHeight: "100vh",
+          width: `calc(100% - ${SIDEBAR_WIDTH}px)`,
+          p: { xs: 3, md: 5 },
         }}
       >
-        {/* Top Fixed Header Bar */}
-        <AppBar
-          position="fixed"
-          elevation={0}
-          sx={{
-            width: `calc(100% - ${drawerWidth}px)`,
-            ml: `${drawerWidth}px`,
-            bgcolor: "rgba(255, 255, 255, 0.8)",
-            backdropFilter: "blur(12px)",
-            color: "#0f172a",
-            borderBottom: "1px solid #e2e8f0",
-          }}
-        >
-          <Toolbar sx={{ minHeight: "80px" }}>
-            <Box>
-              <Typography variant="h3" fontWeight="800" sx={{ letterSpacing: "-0.5px" }}>
-                Dashboard Overview
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Real-time marketplace telemetry updates for TechAgro.
-              </Typography>
-            </Box>
-          </Toolbar>
-        </AppBar>
-
-        {/* Structural Margin Offset push down below header */}
-        <Toolbar sx={{ minHeight: "80px" }} />
-
-        {/* Analytics Interactive Content Container Grid */}
-        <Box sx={{ p: { xs: 3, md: 4 } }}>
-          <Grid container spacing={3}>
-            
-            {/* Metric Card 1: Total Products */}
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper
-                elevation={0}
-                sx={{ p: 3, borderRadius: "16px", border: "1px solid #e2e8f0", bgcolor: "#fff" }}
-              >
-                <Typography variant="body2" color="#64748b" fontWeight="600">
-                  Total Products
-                </Typography>
-                <Typography variant="h4" fontWeight="800" sx={{ mt: 1, color: "#0f172a" }}>
-                  120
-                </Typography>
-              </Paper>
-            </Grid>
-
-            {/* Metric Card 2: Orders */}
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper
-                elevation={0}
-                sx={{ p: 3, borderRadius: "16px", border: "1px solid #e2e8f0", bgcolor: "#fff" }}
-              >
-                <Typography variant="body2" color="#64748b" fontWeight="600">
-                  Active Orders
-                </Typography>
-                <Typography variant="h4" fontWeight="800" sx={{ mt: 1, color: "#0f172a" }}>
-                  45
-                </Typography>
-              </Paper>
-            </Grid>
-
-            {/* Metric Card 3: Revenue */}
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper
-                elevation={0}
-                sx={{ p: 3, borderRadius: "16px", border: "1px solid #e2e8f0", bgcolor: "#fff" }}
-              >
-                <Typography variant="body2" color="#64748b" fontWeight="600">
-                  Gross Revenue
-                </Typography>
-                <Typography variant="h4" fontWeight="800" sx={{ mt: 1, color: "#1B5E20" }}>
-                  Rs. 250k
-                </Typography>
-              </Paper>
-            </Grid>
-
-            {/* Metric Card 4: Total Stock */}
-            <Grid item xs={12} sm={6} md={3}>
-              <Paper
-                elevation={0}
-                sx={{ p: 3, borderRadius: "16px", border: "1px solid #e2e8f0", bgcolor: "#fff" }}
-              >
-                <Typography variant="body2" color="#64748b" fontWeight="600">
-                  Stock Units
-                </Typography>
-                <Typography variant="h4" fontWeight="800" sx={{ mt: 1, color: "#0f172a" }}>
-                  850
-                </Typography>
-              </Paper>
-            </Grid>
-
-            {/* Graphical Analytics Left Panel: Revenue Flow Curve Line */}
-            <Grid item xs={12} lg={8}>
-              <Card
-                elevation={0}
-                sx={{ p: 3, borderRadius: "20px", border: "1px solid #e2e8f0", bgcolor: "#fff" }}
-              >
-                <Typography variant="h6" fontWeight="700" sx={{ mb: 3 }}>
-                  Revenue Trajectory History
-                </Typography>
-                <Box sx={{ width: "100%", height: 320 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#1B5E20" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#1B5E20" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="month" tickLine={false} axisLine={false} stroke="#64748b" style={{ fontSize: "12px" }} />
-                      <YAxis tickLine={false} axisLine={false} stroke="#64748b" style={{ fontSize: "12px" }} />
-                      <Tooltip contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }} />
-                      <Area type="monotone" dataKey="revenue" stroke="#1B5E20" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </Box>
-              </Card>
-            </Grid>
-
-            {/* Graphical Analytics Right Panel: Inventory Breakdown Donut Chart */}
-            <Grid item xs={12} lg={4}>
-              <Card
-                elevation={0}
-                sx={{ p: 3, borderRadius: "20px", border: "1px solid #e2e8f0", bgcolor: "#fff", display: "flex", flexDirection: "column", height: "100%" }}
-              >
-                <Typography variant="h6" fontWeight="700" sx={{ mb: 2 }}>
-                  Stock Distribution
-                </Typography>
-                <Box sx={{ width: "100%", height: 260, display: "flex", justifyContent: "center", alignItems: "center" }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={categoryDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={65} // Makes it a sleek donut chart instead of full solid pie disc
-                        outerRadius={85}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {categoryDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend iconType="circle" wrapperStyle={{ bottom: -5, fontSize: "13px" }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </Box>
-              </Card>
-            </Grid>
-
-          </Grid>
+        {/* Dynamic Fluid Brand Header (Replaced heavy AppBar for clean spacing) */}
+        <Box mb={5}>
+          <Typography variant="h4"  fontWeight="800" sx={{ fontFamily: "'Courier New', monospace", color: "#0f172a", letterSpacing: "-0.5px" }}>
+            Dashboard Overview
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#64748b", mt: 0.5 }}>
+            Real-time marketplace telemetry updates for TechAgro reserves.
+          </Typography>
         </Box>
+
+        {/* Analytic Metrics Summary Cards Deck */}
+        <Grid container spacing={3} mb={5}>
+          {[
+            { label: "Total Products", value: "120", icon: <ShoppingBagIcon />, color: "#3b82f6", bg: "rgba(59, 130, 246, 0.08)" },
+            { label: "Active Orders", value: "45", icon: <ReceiptLongIcon />, color: "#8b5cf6", bg: "rgba(139, 92, 246, 0.08)" },
+            { label: "Gross Revenue", value: "Rs. 250k", icon: <MonetizationOnIcon />, color: "#22c55e", bg: "rgba(34, 197, 94, 0.08)" },
+            { label: "Stock Units", value: "850", icon: <LayersIcon />, color: "#f59e0b", bg: "rgba(245, 158, 11, 0.08)" },
+          ].map((card, idx) => (
+            <Grid item xs={12} sm={6} md={3} key={idx}>
+              <Card sx={{ borderRadius: "16px", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
+                <CardContent sx={{ p: 3, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <Box>
+                    <Typography variant="caption" fontWeight={600} sx={{ color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                      {card.label}
+                    </Typography>
+                    <Typography variant="h4" fontWeight={800} sx={{ color: idx === 2 ? "#15803d" : "#1e293b", mt: 0.5, lineHeight: 1 }}>
+                      {card.value}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ p: 1.5, borderRadius: "12px", color: card.color, bgcolor: card.bg, display: "flex" }}>
+                    {card.icon}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        {/* Graphical Telemetry Matrix Wrapper Grid */}
+        <Grid container spacing={4}>
+          
+          {/* Left Panel: Revenue Trajectory Curve Area Map */}
+          <Grid item xs={12} lg={8}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: "20px", border: "1px solid #e2e8f0", bgcolor: "#fff" }}
+            >
+              <br/> 
+              <Typography variant="subtitle1" fontWeight="700" sx={{ mb: 3, color: "#1e293b" }}>
+                Revenue Trajectory History
+              </Typography>
+              <br/><br/>
+              <Box sx={{ width: "100%", height: 320 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#22c55e" stopOpacity={0.15}/>
+                        <stop offset="95%" stopColor="#22c55e" stopOpacity={0.005}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} stroke="#94a3b8" style={{ fontSize: "12px", fontWeight: 500 }} />
+                    <YAxis tickLine={false} axisLine={false} stroke="#94a3b8" style={{ fontSize: "12px", fontWeight: 500 }} />
+                    <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.05)" }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Right Panel: Inventory Distribution Donut Chart */}
+          <Grid item xs={12} lg={4}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: "20px", border: "1px solid #e2e8f0", bgcolor: "#fff", display: "flex", flexDirection: "column", height: "100%" }}
+            >
+              <Typography variant="subtitle1" fontWeight="700" sx={{ mb: 2, color: "#1e293b" }}>
+                Stock Distribution
+              </Typography>
+              <Box sx={{ width: "100%", height: 260, display: "flex", justifyContent: "center", alignItems: "center", mt: "auto", mb: "auto" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={categoryDistribution}
+                      cx="50%"
+                      cy="48%"
+                      innerRadius={68}
+                      outerRadius={88}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {categoryDistribution.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} style={{ outline: "none" }} />
+                      ))}
+                    </Pie>
+                    <Tooltip containerStyle={{ borderRadius: "8px" }} />
+                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ bottom: 0, fontSize: "12px", fontWeight: 500, color: "#475569" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </Paper>
+          </Grid>
+
+        </Grid>
       </Box>
     </Box>
   );

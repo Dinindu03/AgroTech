@@ -137,7 +137,7 @@
   }
 
   @media (max-width: 1024px) {
-    margin-top: 20px;
+    margin-top: 0px;
     flex-wrap: wrap;
     justify-content: center;
 

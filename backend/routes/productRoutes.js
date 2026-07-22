@@ -60,7 +60,7 @@ router.post("/add", (req, res) => {
   const sql = `
     INSERT INTO products
     (
-      id,
+      product_id,
       name,
       brand,
       category,
