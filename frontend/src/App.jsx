@@ -14,6 +14,7 @@ import CheckOut from "./pages/Checkout";
 import OdersList from "./pages/OdersList" ;
 import ShippingDetails from "./pages/ShippingDetails";
 import ProcessOders from "./pages/ProcessOders";
+import ShippingOrders from "./pages/ShippingOrders"
 
 function App() {
   // Global cart tracking
@@ -55,6 +56,7 @@ function App() {
         <Route path="/OdersList" element={<OdersList/>} />
         <Route path="/shipping-details" element={<ShippingDetails />} />
         <Route path="/ProcessOders" element={<ProcessOders />} />
+        <Route path="/ShippingOrders" element={<ShippingOrders/>}/>
 
         {/* Checkout Execution Route */}
         <Route 

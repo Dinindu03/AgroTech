@@ -16,7 +16,7 @@ router.get("/all", (req, res) => {
         success: false,
         message: "Failed to fetch products",
       });
-    } 
+    }
 
     res.status(200).json({
       success: true,
@@ -41,7 +41,6 @@ router.post("/add", (req, res) => {
     enteredBy,
     date,
     description,
-    image,
   } = req.body;
 
   if (
@@ -49,7 +48,9 @@ router.post("/add", (req, res) => {
     !name ||
     !category ||
     price === "" ||
-    stock === ""
+    price === undefined ||
+    stock === "" ||
+    stock === undefined
   ) {
     return res.status(400).json({
       success: false,
@@ -69,10 +70,9 @@ router.post("/add", (req, res) => {
       supplier,
       enteredBy,
       date,
-      description,
-      image
+      description
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
 
   const values = [
@@ -86,7 +86,6 @@ router.post("/add", (req, res) => {
     enteredBy,
     date,
     description,
-    image,
   ];
 
   db.query(sql, values, (err, result) => {

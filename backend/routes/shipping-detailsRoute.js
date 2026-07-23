@@ -24,24 +24,22 @@ router.get("/my-orders/:email", async (req, res) => {
   }
 
   try {
-    // 1) Orders + their shipping row + their payment row, for this user.
-    //    LEFT JOIN so an order still shows up even if shipping/payment
-    //    somehow wasn't created (keeps the page from silently dropping it).
+  
     const ordersSQL = `
       SELECT
     o.order_id,
     
     o.email,
     o.phone,
-    o.address,
-    o.city,
+ 
    
-    o.payment_method,
-    o.subtotal,
-    o.shipping_fee,
+   
+
+  
+   
     o.total_amount,
     o.order_date,
-    o.shipping_status AS order_shipping_status,
+  
 
     s.shipping_id,
     
@@ -53,12 +51,13 @@ router.get("/my-orders/:email", async (req, res) => {
     s.tracking_number,
     s.shipping_date,
     s.delivered_date,
-
+    s.shipping_status,
     p.payment_id,
     p.payment_status,
     p.transaction_ref,
     p.amount AS payment_amount,
-    p.payment_date
+    p.payment_date,
+    p.payment_method
 
 FROM orders o
 

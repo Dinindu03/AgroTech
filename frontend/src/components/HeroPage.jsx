@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import axios from "axios";
 
@@ -18,6 +19,7 @@ function HeroPage() {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
 
+ const navigate = useNavigate();
   // ================= WEATHER API =================
  useEffect(() => {
   const fetchWeather = async (lat, lon) => {
@@ -45,7 +47,8 @@ function HeroPage() {
     }
   };
 
- 
+
+
   const defaultLat = 6.9271;
   const defaultLon = 79.8612;
 
@@ -197,9 +200,9 @@ function HeroPage() {
                 }}
               >
                 <Button
+                  onClick={() => navigate("/Productandservicehome")}
                   sx={{
-                    background:
-                      "linear-gradient(135deg,#66bb6a,#2e7d32)",
+                    background: "linear-gradient(135deg,#66bb6a,#2e7d32)",
                     color: "#fff",
                     px: 4,
                     py: 1.8,
@@ -208,8 +211,7 @@ function HeroPage() {
                     textTransform: "none",
 
                     "&:hover": {
-                      background:
-                        "linear-gradient(135deg,#43a047,#1b5e20)",
+                      background: "linear-gradient(135deg,#43a047,#1b5e20)",
                     },
                   }}
                 >
@@ -217,6 +219,7 @@ function HeroPage() {
                 </Button>
 
                 <Button
+                  onClick={() => navigate("/about")}
                   variant="outlined"
                   sx={{
                     borderColor: "rgba(255,255,255,0.30)",

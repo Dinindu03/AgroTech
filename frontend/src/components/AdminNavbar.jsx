@@ -51,7 +51,7 @@ export default function AdminSidebar() {
     },
     {
       text: "Shipped",
-      path: "/OrdersList?status=shipped",
+      path: "/ShippingOrders",
       icon: <Inventory2OutlinedIcon />,
     },
     {

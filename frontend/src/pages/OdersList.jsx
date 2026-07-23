@@ -11,12 +11,6 @@ import {
   InputAdornment,
   Chip,
   Paper,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/SearchOutlined";
@@ -33,13 +27,6 @@ const API_URL = "http://localhost:5000/api/orders/all";
 export default function OrderDashboard() {
   const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState("");
-  const [updatingId, setUpdatingId] = useState(null);
-
-  // Shipping details popup state
-  const [shipDialogOrder, setShipDialogOrder] = useState(null);
-  const [trackingNumber, setTrackingNumber] = useState("");
-  const [shippingRef, setShippingRef] = useState("");
-  const [deliveredDate, setDeliveredDate] = useState("");
 
   useEffect(() => {
     fetchOrders();
@@ -54,60 +41,6 @@ export default function OrderDashboard() {
       }
     } catch (err) {
       console.error("Fetch Orders Error:", err);
-    }
-  };
-
-  const openShipDialog = (order) => {
-    setShipDialogOrder(order);
-    setTrackingNumber(order.tracking_number || "");
-    setShippingRef(order.shipping_ref || "");
-    setDeliveredDate(order.delivered_date || "");
-  };
-
-  const closeShipDialog = () => {
-    setShipDialogOrder(null);
-    setTrackingNumber("");
-    setShippingRef("");
-    setDeliveredDate("");
-  };
-
-  const handleConfirmShipped = async () => {
-    if (!shipDialogOrder) return;
-    const order = shipDialogOrder;
-
-    try {
-      setUpdatingId(order.order_id);
-
-      const res = await axios.put(
-        `http://localhost:5000/api/orders/update-status/${order.order_id}`,
-        {
-          shipping_status: "Shipped",
-          tracking_number: trackingNumber,
-          shipping_ref: shippingRef,
-          delivered_date: deliveredDate,
-        }
-      );
-
-      if (res.data.success) {
-        setOrders((prev) =>
-          prev.map((o) =>
-            o.order_id === order.order_id
-              ? {
-                  ...o,
-                  shipping_status: "Shipped",
-                  tracking_number: trackingNumber,
-                  shipping_ref: shippingRef,
-                  delivered_date: deliveredDate,
-                }
-              : o
-          )
-        );
-        closeShipDialog();
-      }
-    } catch (err) {
-      console.error("Mark Shipped Error:", err);
-    } finally {
-      setUpdatingId(null);
     }
   };
 
@@ -143,6 +76,8 @@ export default function OrderDashboard() {
     switch (status?.toLowerCase()) {
       case "processing":
         return { bgcolor: "#fff7ed", color: "#c2410c", border: "1px solid #fed7aa" };
+      case "packed":
+        return { bgcolor: "#fefce8", color: "#a16207", border: "1px solid #fef08a" };
       case "shipped":
         return { bgcolor: "#eff6ff", color: "#1d4ed8", border: "1px solid #bfdbfe" };
       case "delivered":
@@ -193,10 +128,9 @@ export default function OrderDashboard() {
     "Payment",
     "Total",
     "Shipping Status",
-    "Actions",
   ];
 
-  const gridTemplateColumns = "0.6fr 1.5fr 1.5fr 1.5fr 1fr 1fr 1fr 1fr";
+  const gridTemplateColumns = "0.7fr 1.5fr 1.5fr 1.8fr 1fr 1.1fr 1.1fr";
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
@@ -223,7 +157,7 @@ export default function OrderDashboard() {
 
         {/* STATISTICS */}
         <Grid container spacing={3} mb={4}>
-          {statCards.map((stat, index) => (
+          {statCards.map((stat) => (
             <Grid item xs={12} sm={6} md={3} key={stat.label}>
               <Card
                 sx={{
@@ -356,10 +290,10 @@ export default function OrderDashboard() {
               {/* ADDRESS */}
               <Box>
                 <Typography variant="body2" sx={{ color: "#475569" }}>
-                  {order.address}
+                  {order.shipping_address}
                 </Typography>
                 <Typography variant="caption" sx={{ color: "#94a3b8" }}>
-                  {order.city} - {order.postal_code}
+                  {order.city} {order.postal_code ? `- ${order.postal_code}` : ""}
                 </Typography>
               </Box>
 
@@ -393,36 +327,6 @@ export default function OrderDashboard() {
                   ...getShippingStatusStyle(order.shipping_status),
                 }}
               />
-
-              {/* ACTIONS */}
-              <Box>
-                {["shipped", "delivered", "cancelled"].includes(
-                  order.shipping_status?.toLowerCase()
-                ) ? (
-                  <Typography variant="caption" sx={{ color: "#94a3b8" }}>
-                    —
-                  </Typography>
-                ) : (
-                  <Button
-                    size="small"
-                    onClick={() => openShipDialog(order)}
-                    startIcon={<LocalShippingIcon sx={{ fontSize: 16 }} />}
-                    sx={{
-                      textTransform: "none",
-                      fontWeight: 700,
-                      fontSize: "0.78rem",
-                      borderRadius: "8px",
-                      px: 1.5,
-                      color: "#1d4ed8",
-                      border: "1px solid #bfdbfe",
-                      bgcolor: "#eff6ff",
-                      "&:hover": { bgcolor: "#dbeafe", borderColor: "#93c5fd" },
-                    }}
-                  >
-                    Shipped
-                  </Button>
-                )}
-              </Box>
             </Box>
           ))}
 
@@ -440,108 +344,6 @@ export default function OrderDashboard() {
           )}
         </Paper>
       </Box>
-
-      {/* SHIP ORDER — TRACKING DETAILS POPUP */}
-      <Dialog
-        open={Boolean(shipDialogOrder)}
-        onClose={closeShipDialog}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "16px",
-            border: "1px solid #e2e8f0",
-            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.08)",
-          },
-        }}
-      >
-        <DialogTitle sx={{ fontWeight: 800, color: "#0f172a" }}>
-          Mark Order #{shipDialogOrder?.order_id} as Shipped
-        </DialogTitle>
-
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, pt: 0.5 }}>
-            <TextField
-              label="Tracking Number"
-              placeholder="e.g. LK123456789"
-              value={trackingNumber}
-              onChange={(e) => setTrackingNumber(e.target.value)}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "& fieldset": { borderColor: "#e2e8f0" },
-                },
-              }}
-            />
-
-            <TextField
-              label="Shipping Reference"
-              placeholder="e.g. Waybill / courier ref"
-              value={shippingRef}
-              onChange={(e) => setShippingRef(e.target.value)}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "& fieldset": { borderColor: "#e2e8f0" },
-                },
-              }}
-            />
-
-            <TextField
-              label="Expected Delivery Date"
-              type="date"
-              value={deliveredDate}
-              onChange={(e) => setDeliveredDate(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              fullWidth
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "10px",
-                  "& fieldset": { borderColor: "#e2e8f0" },
-                },
-              }}
-            />
-          </Box>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button
-            onClick={closeShipDialog}
-            sx={{ textTransform: "none", fontWeight: 700, color: "#64748b" }}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            onClick={handleConfirmShipped}
-            disabled={
-              !trackingNumber.trim() ||
-              !shippingRef.trim() ||
-              !deliveredDate ||
-              updatingId === shipDialogOrder?.order_id
-            }
-            startIcon={
-              updatingId === shipDialogOrder?.order_id ? (
-                <CircularProgress size={14} sx={{ color: "#fff" }} />
-              ) : null
-            }
-            sx={{
-              textTransform: "none",
-              fontWeight: 700,
-              borderRadius: "10px",
-              px: 2.5,
-              color: "#fff",
-              bgcolor: "#1d4ed8",
-              "&:hover": { bgcolor: "#1e40af" },
-              "&.Mui-disabled": { bgcolor: "#e2e8f0", color: "#94a3b8" },
-            }}
-          >
-            Confirm Shipped
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   );
 }

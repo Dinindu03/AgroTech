@@ -72,9 +72,7 @@ function useManifestFonts() {
   }, []);
 }
 
-// The real, chronological states a shipment moves through.
-// This is the one place a numbered sequence is earned: it's an
-// actual timeline, not decoration.
+
 const TRACK_STEPS = ["Processing", "Shipped", "Out for Delivery", "Delivered"];
 
 function stepIndexFor(status) {

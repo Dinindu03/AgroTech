@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
 import {
   Box,
@@ -34,27 +34,17 @@ export default function AddProduct() {
   const today = new Date().toISOString().split("T")[0];
 
   const [product, setProduct] = useState({
-    id: generateProductId(), 
+    id: generateProductId(),
     name: "",
     brand: "",
     category: "",
-    price: "", 
+    price: "",
     stock: "",
     supplier: "",
     enteredBy: getAdminName(), // Pulls name securely on initial load
     date: today,
     description: "",
-    image: null, 
   });
-
-  const [preview, setPreview] = useState("");
-
-  // Manage memory cleanup for image object URLs
-  useEffect(() => {
-    return () => {
-      if (preview) URL.revokeObjectURL(preview);
-    };
-  }, [preview]);
 
   const handleChange = (e) => {
     setProduct((prev) => ({
@@ -63,53 +53,17 @@ export default function AddProduct() {
     }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (preview) URL.revokeObjectURL(preview);
-
-      setProduct((prev) => ({
-        ...prev,
-        image: file, 
-      }));
-      setPreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleRemoveImage = () => {
-    if (preview) URL.revokeObjectURL(preview);
-    setPreview("");
-    setProduct((prev) => ({ ...prev, image: null }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let payload;
-      let headers = { "Content-Type": "application/json" };
-
-      if (product.image instanceof File) {
-        headers = { "Content-Type": "multipart/form-data" };
-        payload = new FormData();
-        Object.keys(product).forEach((key) => {
-          payload.append(key, product[key]);
-        });
-      } else {
-        payload = product;
-      }
-
       const response = await axios.post(
         "http://localhost:5000/api/products/add",
-        payload,
-        { headers }
+        product,
+        { headers: { "Content-Type": "application/json" } }
       );
-      
+
       alert(response.data?.message || "Product Saved Successfully");
 
-      // Clean up the image preview memory allocation
-      if (preview) URL.revokeObjectURL(preview);
-      setPreview("");
-      
       // RESET FORM: Notice getAdminName() is run again to guarantee data is preserved
       setProduct({
         id: generateProductId(),
@@ -119,10 +73,9 @@ export default function AddProduct() {
         price: "",
         stock: "",
         supplier: "",
-        enteredBy: getAdminName(), 
+        enteredBy: getAdminName(),
         date: today,
         description: "",
-        image: null,
       });
     } catch (error) {
       console.error(error);
@@ -133,35 +86,35 @@ export default function AddProduct() {
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#f8fafc" }}>
       {/* Sidebar Navigation */}
-      <AdminSidebar />  
+      <AdminSidebar />
 
       {/* Primary Layout Engine */}
-      <Box 
-        sx={{ 
-          flexGrow: 1, 
-          p: { xs: 3, md: 5 }, 
-          display: "flex", 
-          justifyContent: "center", 
-          alignItems: "center" 
+      <Box
+        sx={{
+          flexGrow: 1,
+          p: { xs: 3, md: 5 },
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
         }}
       >
-        <Paper 
+        <Paper
           elevation={0}
-          sx={{ 
+          sx={{
             width: "100%",
-            maxWidth: 1050, 
-            p: { xs: 3, sm: 4, md: 5 }, 
+            maxWidth: 1050,
+            p: { xs: 3, sm: 4, md: 5 },
             borderRadius: "24px",
             bgcolor: "#ffffff",
             border: "1px solid #e2e8f0",
-            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02)"
+            boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02)",
           }}
         >
           {/* Section Header */}
           <Box sx={{ mb: 4 }}>
-            <Typography 
-              variant="h4" 
-              fontWeight="800" 
+            <Typography
+              variant="h4"
+              fontWeight="800"
               sx={{ color: "#0f172a", letterSpacing: "-1px", mb: 0.5 }}
             >
               Create New Product
@@ -173,42 +126,40 @@ export default function AddProduct() {
 
           <Box component="form" onSubmit={handleSubmit}>
             <Grid container spacing={4}>
-
               {/* LEFT COLUMN: Core Metadata Fields */}
               <Grid item xs={12} md={7}>
                 <Grid container spacing={2.5}>
-
                   <Grid item xs={12}>
-                    <TextField 
-                      fullWidth 
-                      label="Product ID" 
-                      name="id" 
-                      value={product.id} 
+                    <TextField
+                      fullWidth
+                      label="Product ID"
+                      name="id"
+                      value={product.id}
                       InputProps={{ readOnly: true }}
                       sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px", bgcolor: "#f8fafc" } }}
                     />
                   </Grid>
 
                   <Grid item xs={12}>
-                    <TextField 
-                      fullWidth 
-                      label="Product Name" 
-                      name="name" 
-                      value={product.name} 
-                      onChange={handleChange} 
-                      required 
+                    <TextField
+                      fullWidth
+                      label="Product Name"
+                      name="name"
+                      value={product.name}
+                      onChange={handleChange}
+                      required
                       sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                     />
                   </Grid>
 
                   <Grid item xs={12} sm={6}>
-                    <TextField 
-                      fullWidth 
-                      label="Brand" 
-                      name="brand" 
+                    <TextField
+                      fullWidth
+                      label="Brand"
+                      name="brand"
                       placeholder="e.g. AgroCorp"
-                      value={product.brand} 
-                      onChange={handleChange} 
+                      value={product.brand}
+                      onChange={handleChange}
                       sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                     />
                   </Grid>
@@ -241,7 +192,11 @@ export default function AddProduct() {
                       value={product.price}
                       onChange={handleChange}
                       InputProps={{
-                        startAdornment: <InputAdornment position="start" sx={{ fontWeight: 600, color: "#94a3b8" }}>Rs.</InputAdornment>,
+                        startAdornment: (
+                          <InputAdornment position="start" sx={{ fontWeight: 600, color: "#94a3b8" }}>
+                            Rs.
+                          </InputAdornment>
+                        ),
                       }}
                       inputProps={{ min: 0, step: "0.01" }}
                       required
@@ -264,12 +219,12 @@ export default function AddProduct() {
                   </Grid>
 
                   <Grid item xs={12}>
-                    <TextField 
-                      fullWidth 
-                      label="Supplier" 
-                      name="supplier" 
-                      value={product.supplier} 
-                      onChange={handleChange} 
+                    <TextField
+                      fullWidth
+                      label="Supplier"
+                      name="supplier"
+                      value={product.supplier}
+                      onChange={handleChange}
                       sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                     />
                   </Grid>
@@ -298,13 +253,11 @@ export default function AddProduct() {
                       sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                     />
                   </Grid>
-
                 </Grid>
               </Grid>
 
-              {/* RIGHT COLUMN: Media & Description */}
+              {/* RIGHT COLUMN: Description + Submit */}
               <Grid item xs={12} md={5} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-
                 <TextField
                   fullWidth
                   multiline
@@ -316,63 +269,6 @@ export default function AddProduct() {
                   onChange={handleChange}
                   sx={{ "& .MuiOutlinedInput-root": { borderRadius: "12px" } }}
                 />
-
-                {/* Aesthetic Image Dropzone wrapper box */}
-                <Box 
-                  sx={{ 
-                    flexGrow: 1,
-                    p: 4, 
-                    border: "2px dashed #cbd5e1", 
-                    borderRadius: "16px", 
-                    bgcolor: "#f8fafc", 
-                    textAlign: "center",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    minHeight: 220,
-                    transition: "all 0.2s ease",
-                    "&:hover": { borderColor: "#1B5E20" }
-                  }}
-                >
-                  {!preview ? (
-                    <Box>
-                      <Typography variant="body2" color="#64748b" sx={{ mb: 1.5 }}>
-                        PNG, JPG or WEBP formats accepted
-                      </Typography>
-                      <Button 
-                        variant="text"
-                        component="label"
-                        sx={{ 
-                          color: "#1B5E20", 
-                          fontWeight: "700", 
-                          textTransform: "none",
-                          "&:hover": { bgcolor: "transparent", textDecoration: "underline" }
-                        }}
-                      >
-                        Browse Files
-                        <input hidden type="file" accept="image/*" onChange={handleImageChange} />
-                      </Button>
-                    </Box>
-                  ) : (
-                    <Box sx={{ width: "100%", textAlign: "center" }}>
-                      <img
-                        src={preview}
-                        alt="preview"
-                        style={{ width: "100%", maxHeight: 180, objectFit: "contain", borderRadius: "12px" }}
-                      />
-                      <Button 
-                        variant="text"
-                        color="error"
-                        size="small"
-                        onClick={handleRemoveImage}
-                        sx={{ textTransform: "none", mt: 1, fontWeight: 600 }}
-                      >
-                        Remove Image
-                      </Button>
-                    </Box>
-                  )}
-                </Box>
 
                 {/* Primary Action Trigger */}
                 <Button
@@ -394,7 +290,6 @@ export default function AddProduct() {
                 >
                   Save Product Entry
                 </Button>
-
               </Grid>
             </Grid>
           </Box>

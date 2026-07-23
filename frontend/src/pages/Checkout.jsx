@@ -16,11 +16,16 @@ import {
   FormControl,
   List,
   ListItem,
+  MenuItem,
+  Dialog,
+  DialogContent,
+  CircularProgress,
 } from "@mui/material";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import PaymentIcon from "@mui/icons-material/Payment";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
 // ── Design tokens — light manifest palette ─────────────────────
 const c = {
@@ -39,26 +44,47 @@ const c = {
   shadow: "0 1px 2px rgba(20,40,10,0.04), 0 8px 24px rgba(20,40,10,0.05)",
 };
 
-const displayFont = "'Space Grotesk', 'Archivo', sans-serif";
-const monoFont = "'IBM Plex Mono', 'Roboto Mono', monospace";
+// All 25 Districts of Sri Lanka
+const SRI_LANKA_DISTRICTS = [
+  "Ampara",
+  "Anuradhapura",
+  "Badulla",
+  "Batticaloa",
+  "Colombo",
+  "Galle",
+  "Gampaha",
+  "Hambantota",
+  "Jaffna",
+  "Kalutara",
+  "Kandy",
+  "Kegalle",
+  "Kilinochchi",
+  "Kurunegala",
+  "Mannar",
+  "Matale",
+  "Matara",
+  "Moneragala",
+  "Mullaitivu",
+  "Nuwara Eliya",
+  "Polonnaruwa",
+  "Puttalam",
+  "Ratnapura",
+  "Trincomalee",
+  "Vavuniya",
+];
 
-function useManifestFonts() {
-  useEffect(() => {
-    const id = "manifest-fonts";
-    if (document.getElementById(id)) return;
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap";
-    document.head.appendChild(link);
-  }, []);
-}
+// Local system fonts for offline internal networks
+const displayFont = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+const monoFont = "ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace";
 
-function Checkout({ cart, cartTotalPrice, setCart, setSnackbar }) {
-  useManifestFonts();
+function Checkout({ cart = [], cartTotalPrice = 0, setCart, setSnackbar }) {
   const [paymentMethod, setPaymentMethod] = useState("card");
   const navigate = useNavigate();
+
+  // Success Popup State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [countdown, setCountdown] = useState(10);
+  const [placedWaybill, setPlacedWaybill] = useState("");
 
   const [shippingInfo, setShippingInfo] = useState({
     fullName: "",
@@ -68,6 +94,35 @@ function Checkout({ cart, cartTotalPrice, setCart, setSnackbar }) {
     city: "",
     postalCode: "",
   });
+
+  // Auto-fill ONLY the logged-in user's email from localStorage
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const user = JSON.parse(storedUser);
+        const userEmail = user?.email || user?.user?.email || "";
+        if (userEmail) {
+          setShippingInfo((prev) => ({ ...prev, email: userEmail }));
+        }
+      }
+    } catch (err) {
+      console.error("Error reading user email from localStorage:", err);
+    }
+  }, []);
+
+  // 10-second timer handling after successful order
+  useEffect(() => {
+    let timer;
+    if (showSuccessModal && countdown > 0) {
+      timer = setInterval(() => {
+        setCountdown((prev) => prev - 1);
+      }, 1000);
+    } else if (showSuccessModal && countdown === 0) {
+      navigate("/Productandservicehome");
+    }
+    return () => clearInterval(timer);
+  }, [showSuccessModal, countdown, navigate]);
 
   const waybillNo = useMemo(
     () => `LK-${Math.floor(100000 + Math.random() * 899999)}`,
@@ -82,15 +137,15 @@ function Checkout({ cart, cartTotalPrice, setCart, setSnackbar }) {
   const shippingCost = cartTotalPrice > 15000 ? 0 : 450;
   const grandTotal = cartTotalPrice + shippingCost;
 
-  // Clears the persisted, per-user cart from localStorage (if present)
-  // so it doesn't reappear after this successful order.
+  // Clears the persisted, per-user cart from localStorage
   const clearPersistedCart = () => {
     try {
       const storedUser = localStorage.getItem("user");
       if (storedUser) {
         const user = JSON.parse(storedUser);
-        if (user?.email) {
-          localStorage.removeItem(`cart_${user.email}`);
+        const email = user?.email || user?.user?.email;
+        if (email) {
+          localStorage.removeItem(`cart_${email}`);
         }
       }
     } catch (storageErr) {
@@ -140,19 +195,14 @@ function Checkout({ cart, cartTotalPrice, setCart, setSnackbar }) {
       );
 
       if (response.status === 200 || response.status === 201) {
-        setSnackbar({
-          open: true,
-          message: "Order logged inside transactional database successfully!",
-        });
-
-        // Clear cart from React state...
+        // Clear cart from state & localStorage
         setCart([]);
-
-        // ...and from persisted storage, so a refresh or re-login
-        // doesn't bring the old cart back.
         clearPersistedCart();
 
-        navigate("/Productandservicehome");
+        // Trigger Success Modal with 10s Countdown
+        setPlacedWaybill(waybillNo);
+        setCountdown(10);
+        setShowSuccessModal(true);
       }
     } catch (err) {
       console.error("Axios request failure logging details:", err);
@@ -232,22 +282,72 @@ function Checkout({ cart, cartTotalPrice, setCart, setSnackbar }) {
               <SectionCard step="01" icon={<LocalShippingIcon />} title="Delivery Logistics">
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <StyledField name="fullName" label="Full consignee name" required value={shippingInfo.fullName} onChange={handleInputChange} />
+                    <StyledField
+                      name="fullName"
+                      label="Full consignee name"
+                      required
+                      value={shippingInfo.fullName}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <StyledField name="email" type="email" label="Contact email" required value={shippingInfo.email} onChange={handleInputChange} />
+                    <StyledField
+                      name="email"
+                      type="email"
+                      label="Contact email"
+                      required
+                      disabled
+                      value={shippingInfo.email}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <StyledField name="phone" label="Phone number" required value={shippingInfo.phone} onChange={handleInputChange} />
+                    <StyledField
+                      name="phone"
+                      label="Phone number"
+                      required
+                      value={shippingInfo.phone}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
                   <Grid item xs={12}>
-                    <StyledField name="address" label="Destination street address" required multiline rows={2} value={shippingInfo.address} onChange={handleInputChange} />
+                    <StyledField
+                      name="address"
+                      label="Destination street address"
+                      required
+                      multiline
+                      rows={2}
+                      value={shippingInfo.address}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
+
+                  {/* 25 Districts Dropdown */}
                   <Grid item xs={12} sm={6}>
-                    <StyledField name="city" label="Hub city" required value={shippingInfo.city} onChange={handleInputChange} />
+                    <StyledField
+                      select
+                      name="city"
+                      label="District / City"
+                      required
+                      value={shippingInfo.city}
+                      onChange={handleInputChange}
+                    >
+                      {SRI_LANKA_DISTRICTS.map((district) => (
+                        <MenuItem key={district} value={district}>
+                          {district}
+                        </MenuItem>
+                      ))}
+                    </StyledField>
                   </Grid>
+
                   <Grid item xs={12} sm={6}>
-                    <StyledField name="postalCode" label="Routing postal code" required value={shippingInfo.postalCode} onChange={handleInputChange} />
+                    <StyledField
+                      name="postalCode"
+                      label="Routing postal code"
+                      required
+                      value={shippingInfo.postalCode}
+                      onChange={handleInputChange}
+                    />
                   </Grid>
                 </Grid>
               </SectionCard>
@@ -327,6 +427,77 @@ function Checkout({ cart, cartTotalPrice, setCart, setSnackbar }) {
           </Grid>
         </Box>
       </Container>
+
+      {/* ── Order Success Modal ────────────────────────────────────── */}
+      <Dialog
+        open={showSuccessModal}
+        PaperProps={{
+          sx: {
+            borderRadius: "20px",
+            p: 2,
+            maxWidth: "440px",
+            textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
+          },
+        }}
+      >
+        <DialogContent sx={{ display: "flex", flexDirection: "column", alignItems: "center", pt: 3 }}>
+          <CheckCircleOutlineIcon sx={{ fontSize: 72, color: c.accent, mb: 1 }} />
+          <Typography sx={{ fontFamily: displayFont, fontWeight: 700, fontSize: "1.6rem", mb: 0.5 }}>
+            Order Placed Successfully!
+          </Typography>
+          <Typography sx={{ color: c.textMuted, fontSize: "0.9rem", mb: 2 }}>
+            Your transaction has been recorded. Waybill: <strong>#{placedWaybill}</strong>
+          </Typography>
+
+          <Box sx={{ position: "relative", display: "inline-flex", my: 2 }}>
+            <CircularProgress
+              variant="determinate"
+              value={(countdown / 10) * 100}
+              size={64}
+              thickness={4}
+              sx={{ color: c.accent }}
+            />
+            <Box
+              sx={{
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                position: "absolute",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Typography sx={{ fontFamily: monoFont, fontWeight: 700, fontSize: "1.1rem" }}>
+                {countdown}s
+              </Typography>
+            </Box>
+          </Box>
+
+          <Typography sx={{ color: c.textFaint, fontSize: "0.8rem", mb: 3 }}>
+            Auto-redirecting to product catalog...
+          </Typography>
+
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={() => navigate("/Productandservicehome")}
+            sx={{
+              bgcolor: c.accent,
+              color: "#fff",
+              borderRadius: "10px",
+              py: 1.2,
+              fontWeight: 600,
+              fontFamily: displayFont,
+              "&:hover": { bgcolor: "#357f13" },
+            }}
+          >
+            Continue Now
+          </Button>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 }
@@ -386,6 +557,10 @@ function StyledField(props) {
           "& fieldset": { borderColor: c.border },
           "&:hover fieldset": { borderColor: c.borderStrong },
           "&.Mui-focused fieldset": { borderColor: c.accent, borderWidth: "1px" },
+          "&.Mui-disabled": {
+            backgroundColor: "rgba(0, 0, 0, 0.04)",
+            cursor: "not-allowed",
+          },
         },
       }}
     />
@@ -453,7 +628,7 @@ function ManifestStub({ cart, cartTotalPrice, shippingCost, grandTotal, waybillN
         <List disablePadding sx={{ maxHeight: 220, overflowY: "auto", mb: 1 }}>
           {cart.map((item, i) => (
             <ListItem
-              key={item.id || item._id}
+              key={item.id || item._id || i}
               disableGutters
               sx={{
                 py: 1.2,

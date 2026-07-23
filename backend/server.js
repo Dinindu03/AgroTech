@@ -8,7 +8,7 @@ const productRoutes = require("./routes/productRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const orderRoutes=require("./routes/orderRoutes");
 const shippingDetailsRoutes=require("./routes/shipping-detailsRoute");
-
+const dashboard =require("./routes/dashboardRoutes");
 
 
 
@@ -24,9 +24,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/shipping", shippingDetailsRoutes);
+app.use("/api/dashboard", dashboard);
 // Test Route
 app.get("/", (req, res) => {
-  res.send("TechAgro Backend Running");
+  res.send("AgroTech Backend Running");
 });
 
 // Server
