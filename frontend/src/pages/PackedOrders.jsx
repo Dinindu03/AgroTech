@@ -436,8 +436,8 @@ function ShippingOrderCard({ order, values, isUpdating, onFieldChange, onConfirm
       elevation={0}
       sx={{
         borderRadius: "16px",
-        border: "1px solid #e2e8f0",
-        bgcolor: "#fff",
+        border: "1px solid #d3e5fb",
+        bgcolor: "#ffffff",
         mb: 3,
         overflow: "hidden",
       }}
@@ -451,7 +451,7 @@ function ShippingOrderCard({ order, values, isUpdating, onFieldChange, onConfirm
           flexWrap: "wrap",
           gap: 1.5,
           p: 3,
-          bgcolor: "#f8fafc",
+          bgcolor: "#cfe3f7",
           borderBottom: "1px solid #e2e8f0",
         }}
       >

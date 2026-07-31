@@ -51,7 +51,7 @@ export default function ProductDashboard() {
   const filteredProducts = products.filter((product) => {
     const searchMatch =
       product.name?.toLowerCase().includes(search.toLowerCase()) ||
-      product.id?.toLowerCase().includes(search.toLowerCase()) ||
+      product.product_id?.toLowerCase().includes(search.toLowerCase()) ||
       product.supplier?.toLowerCase().includes(search.toLowerCase());
 
     const categoryMatch =
@@ -239,7 +239,7 @@ export default function ProductDashboard() {
 
             return (
               <Box
-                key={product.id}
+                key={product.product_id}
                 sx={{
                   display: "grid",
                   gridTemplateColumns: "100px 2fr 130px 120px 110px 140px 140px 120px",
@@ -253,7 +253,7 @@ export default function ProductDashboard() {
               >
                 {/* ID index node */}
                 <Typography variant="body2" fontWeight={600} sx={{ color: "#64748b" }}>
-                  {product.id}
+                  {product.product_id}
                 </Typography>
 
                 {/* Identity Object Node (Avatar & Name) */}

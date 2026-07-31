@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -16,7 +17,7 @@ const KnowledgeHub = () => {
     "Improving soil quality",
     "IOT-based smart farming solutions",
   ];
-
+const navigate = useNavigate();
   return (
     <Box
       id="knowledgehub"
@@ -92,23 +93,23 @@ const KnowledgeHub = () => {
           </Box>
 
           <Button
-            variant="outlined"
-            sx={{
-              color: "#fff",
-              borderColor: "#fff",
-              px: 4,
-              py: 1.5,
-              borderRadius: "12px",
-
-              "&:hover": {
-                bgcolor: "#fff",
-                color: "#000",
-                borderColor: "#fff",
-              },
-            }}
-          >
-            Explore More
-          </Button>
+  variant="outlined"
+  onClick={() => navigate("/KHub")}
+  sx={{
+    color: "#fff",
+    borderColor: "#fff",
+    px: 4,
+    py: 1.5,
+    borderRadius: "12px",
+    "&:hover": {
+      bgcolor: "#fff",
+      color: "#000",
+      borderColor: "#fff",
+    },
+  }}
+>
+  Explore More
+</Button>
         </Box>
       </Container>
     </Box>

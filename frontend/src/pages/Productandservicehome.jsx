@@ -56,6 +56,8 @@ const categoryVisualMap = {
 const defaultVisual = { emoji: "🌿", bg: "linear-gradient(135deg, #E4D9C8, #C7A97E)" };
 
 function getCategoryVisual(category) {
+
+  
   const key = (category || "").trim().toLowerCase();
 
   if (key.includes("seed")) return categoryVisualMap.seed;
@@ -73,7 +75,10 @@ function Shop({ cart, setCart, cartTotalPrice, setSnackbar }) {
   const [cartLoaded, setCartLoaded] = useState(false);
 
   const navigate = useNavigate();
-
+// Automatically scroll to top whenever this page opens
+useEffect(() => {
+  window.scrollTo(0, 0);
+}, []);
   // ================= FETCH PRODUCTS =================
   useEffect(() => {
     fetchProducts();

@@ -14,7 +14,12 @@ import CheckOut from "./pages/Checkout";
 import OdersList from "./pages/OdersList" ;
 import ShippingDetails from "./pages/ShippingDetails";
 import ProcessOders from "./pages/ProcessOders";
-import ShippingOrders from "./pages/ShippingOrders"
+import ShippingOrders from "./pages/PackedOrders";
+import CustomerCare from "./pages/CustomerCare";
+import DeliveredOrders from "./pages/ShippedOrders";
+import ReturnedOrders from "./pages/ReturnedOrders";
+import KHub from "./pages/KHub";
+import UpdateProductInfo from "./pages/UpdateProductInfo";
 
 function App() {
   // Global cart tracking
@@ -35,6 +40,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/Login" element={<Login />} />
         <Route path="/SignUp" element={<SignUp />} />
+        <Route path="/KHub" element={<KHub />} />
 
         
         {/* Marketplace Hub Route */}
@@ -57,7 +63,10 @@ function App() {
         <Route path="/shipping-details" element={<ShippingDetails />} />
         <Route path="/ProcessOders" element={<ProcessOders />} />
         <Route path="/ShippingOrders" element={<ShippingOrders/>}/>
-
+        <Route path="/CustomerCare" element={<CustomerCare/>}/>
+        <Route path="/DeliveredOrders" element={<DeliveredOrders/>}/>
+        <Route path="/ReturnedOrders" element={<ReturnedOrders/>}/>
+        <Route path="/UpdateProductInfo" element={<UpdateProductInfo/>}/>
         {/* Checkout Execution Route */}
         <Route 
           path="/checkOut" 
