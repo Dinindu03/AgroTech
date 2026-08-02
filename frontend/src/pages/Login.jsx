@@ -152,19 +152,16 @@ function Login() {
             }}
           >
             <Box
-              component="img"
-              src={logo}
-              alt="TechAgro Logo"
-              sx={{
-                height: { xs: 400, md: 500 },
-                width: "auto",
-                objectFit: "contain",
-                mb: 3,
-                filter: "drop-shadow(0 8px 20px rgba(0,0,0,0.5))",
-                position: "relative",
-                zIndex: 1,
-              }}
-            />
+  component="img"
+  src={logo}
+  alt="TechAgro Logo"
+  sx={{
+    display: { xs: "none", md: "block" },
+    height: 500,
+    width: "auto",
+    objectFit: "contain",
+  }}
+/>
           </Box>
         </Grid>
 

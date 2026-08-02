@@ -20,6 +20,7 @@ import DeliveredOrders from "./pages/ShippedOrders";
 import ReturnedOrders from "./pages/ReturnedOrders";
 import KHub from "./pages/KHub";
 import UpdateProductInfo from "./pages/UpdateProductInfo";
+import Smartfarming from "./pages/Smartfarming";
 
 function App() {
   // Global cart tracking
@@ -67,6 +68,7 @@ function App() {
         <Route path="/DeliveredOrders" element={<DeliveredOrders/>}/>
         <Route path="/ReturnedOrders" element={<ReturnedOrders/>}/>
         <Route path="/UpdateProductInfo" element={<UpdateProductInfo/>}/>
+        <Route path="/Smartfarming" element={<Smartfarming/>}/>
         {/* Checkout Execution Route */}
         <Route 
           path="/checkOut" 
