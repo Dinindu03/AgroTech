@@ -29,8 +29,8 @@ router.post("/create", async (req, res) => {
 
   const orderSQL = `
     INSERT INTO orders
-    (consignee_name, email, phone,  total_amount)
-    VALUES (?, ?, ?, ?)
+    (consignee_name, email, phone,  total_amount,order_status)
+    VALUES (?, ?, ?, ? ,'Active')
   `;
 
   db.query(
@@ -190,13 +190,14 @@ router.get("/P", (req, res) => {
     oi.product_id,
     oi.product_name,
     oi.price,
-    oi.quantity
+    oi.quantity,
+    o.order_status
 FROM orders o
 LEFT JOIN order_items oi
     ON oi.order_id = o.order_id
 LEFT JOIN shipping s
     ON s.order_id = o.order_id
-WHERE s.shipping_status = 'Processing'
+WHERE s.shipping_status = 'Processing' AND o.order_status='Active'
 ORDER BY o.order_date DESC
   `;
 
@@ -255,6 +256,7 @@ router.get("/S", (req, res) => {
       s.shipping_ref,
       s.shipping_date,
       p.payment_method,
+      o.order_status,
       oi.product_id,
       oi.product_name,
       oi.price,
@@ -263,7 +265,7 @@ router.get("/S", (req, res) => {
     LEFT JOIN shipping s ON s.order_id = o.order_id
     LEFT JOIN payments p ON p.order_id = o.order_id
     LEFT JOIN order_items oi ON oi.order_id = o.order_id
-    WHERE LOWER(s.shipping_status) = 'packed' OR LOWER(s.shipping_status) = 'ready to ship'
+    WHERE (LOWER(s.shipping_status) = 'packed' OR LOWER(s.shipping_status) = 'ready to ship') AND o.order_status = 'Active'
     ORDER BY o.order_date DESC
   `;
 
@@ -417,6 +419,408 @@ router.put("/update-status-shiped/:orderId", (req, res) => {
       });
     }
   );
+});
+
+
+ 
+// ===============================
+// GET SHIPPED ORDERS
+// ===============================
+router.get("/Shipped", (req, res) => {
+  const sql = `
+    SELECT
+      o.order_id,
+      o.consignee_name,
+      o.email,
+      o.phone,
+      s.shipping_address AS address,
+      s.shipping_city AS city,
+      s.shipping_postal_code AS postal_code,
+      o.total_amount,
+      o.order_date,
+      s.shipping_status,
+      s.tracking_number,
+      s.shipping_ref,
+      s.shipping_date,
+      s.delivered_date,
+      oi.product_id,
+      oi.product_name,
+      oi.quantity,
+      oi.price
+    FROM orders o
+    LEFT JOIN shipping s
+      ON s.order_id = o.order_id
+    LEFT JOIN order_items oi
+      ON oi.order_id = o.order_id
+    WHERE s.shipping_status = 'Shipped' AND o.order_status = 'Active'
+    ORDER BY s.delivered_date DESC, o.order_date DESC
+  `;
+
+  db.query(sql, (err, rows) => {
+    if (err) {
+      console.error("❌ FETCH DELIVERED ORDERS ERROR:", err);
+      return res.status(500).json({
+        success: false,
+        message: err.sqlMessage,
+      });
+    }
+
+    const orders = groupOrderRows(rows, [
+      "order_id",
+      "consignee_name",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "postal_code",
+      "total_amount",
+      "order_date",
+      "shipping_status",
+      "tracking_number",
+      "shipping_ref",
+      "shipping_date",
+      "delivered_date",
+    ]);
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  });
+});
+
+// ===============================
+// Helper
+// ===============================
+function groupOrderRows(rows, baseFields) {
+  const map = new Map();
+
+  rows.forEach((row) => {
+    if (!map.has(row.order_id)) {
+      const base = {};
+
+      baseFields.forEach((field) => {
+        base[field] = row[field];
+      });
+
+      base.items = [];
+
+      map.set(row.order_id, base);
+    }
+
+    if (row.product_id) {
+      map.get(row.order_id).items.push({
+        product_id: row.product_id,
+        product_name: row.product_name,
+        quantity: row.quantity,
+        price: row.price,
+      });
+    }
+  });
+
+  return Array.from(map.values());
+}
+
+// ===============================
+// GET DELIVERED ORDERS
+// ===============================
+router.get("/delivered", (req, res) => {
+  const sql = `
+    SELECT
+      o.order_id,
+      o.consignee_name,
+      o.email,
+      o.phone,
+      s.shipping_address AS address,
+      s.shipping_city AS city,
+      s.shipping_postal_code AS postal_code,
+      o.total_amount,
+      o.order_date,
+      s.shipping_status,
+      s.tracking_number,
+      s.shipping_ref,
+      s.shipping_date,
+      s.delivered_date,
+      oi.product_id,
+      oi.product_name,
+      oi.quantity,
+      oi.price
+    FROM orders o
+    LEFT JOIN shipping s
+      ON s.order_id = o.order_id
+    LEFT JOIN order_items oi
+      ON oi.order_id = o.order_id
+    WHERE s.shipping_status = 'Delivered' AND o.order_status = 'Active'
+    ORDER BY s.delivered_date DESC, o.order_date DESC
+  `;
+
+  db.query(sql, (err, rows) => {
+    if (err) {
+      console.error("❌ FETCH DELIVERED ORDERS ERROR:", err);
+      return res.status(500).json({
+        success: false,
+        message: err.sqlMessage,
+      });
+    }
+
+    const orders = groupOrderRows(rows, [
+      "order_id",
+      "consignee_name",
+      "email",
+      "phone",
+      "address",
+      "city",
+      "postal_code",
+      "total_amount",
+      "order_date",
+      "shipping_status",
+      "tracking_number",
+      "shipping_ref",
+      "shipping_date",
+      "delivered_date",
+    ]);
+
+    res.status(200).json({
+      success: true,
+      orders,
+    });
+  });
+});
+
+// ===============================
+// Helper
+// ===============================
+function groupOrderRows(rows, baseFields) {
+  const map = new Map();
+
+  rows.forEach((row) => {
+    if (!map.has(row.order_id)) {
+      const base = {};
+
+      baseFields.forEach((field) => {
+        base[field] = row[field];
+      });
+
+      base.items = [];
+
+      map.set(row.order_id, base);
+    }
+
+    if (row.product_id) {
+      map.get(row.order_id).items.push({
+        product_id: row.product_id,
+        product_name: row.product_name,
+        quantity: row.quantity,
+        price: row.price,
+      });
+    }
+  });
+
+  return Array.from(map.values());
+}
+// ===============================
+// GET RETURN REQUESTS
+// ===============================
+router.get("/returns", (req, res) => {
+
+  const sql = `
+    SELECT
+      r.return_id,
+      r.order_id,
+      o.consignee_name,
+      o.email,
+      o.phone,
+      o.order_date,
+
+      s.shipping_address AS address,
+      s.shipping_city AS city,
+      s.shipping_postal_code AS postal_code,
+      s.shipping_status,
+
+      r.reason,
+      r.return_status,
+      r.received_date,
+
+      oi.product_id,
+      oi.product_name,
+      oi.quantity,
+      oi.price
+
+    FROM returns r
+
+    INNER JOIN orders o
+      ON r.order_id = o.order_id
+
+    LEFT JOIN shipping s
+      ON s.order_id = o.order_id
+
+    LEFT JOIN order_items oi
+      ON oi.order_id = o.order_id
+
+   
+
+    ORDER BY r.return_id DESC
+  `;
+
+  db.query(sql, (err, rows) => {
+
+    if (err) {
+      console.error("GET RETURNS ERROR:", err);
+
+      return res.status(500).json({
+        success: false,
+        message: err.sqlMessage
+      });
+    }
+
+    const map = new Map();
+
+    rows.forEach((row) => {
+
+      if (!map.has(row.order_id)) {
+
+        map.set(row.order_id, {
+          return_id: row.return_id,
+          order_id: row.order_id,
+          consignee_name: row.consignee_name,
+          email: row.email,
+          phone: row.phone,
+          order_date: row.order_date,
+
+          address: row.address,
+          city: row.city,
+          postal_code: row.postal_code,
+
+          shipping_status: row.shipping_status,
+          received_date: row.received_date,
+          reason: row.reason,
+          return_status: row.return_status,
+
+          items: []
+        });
+
+      }
+
+      if (row.product_id) {
+
+        map.get(row.order_id).items.push({
+          product_id: row.product_id,
+          product_name: row.product_name,
+          quantity: row.quantity,
+          price: row.price
+        });
+
+      }
+
+    });
+
+    res.json({
+      success: true,
+      returns: Array.from(map.values())
+    });
+
+  });
+
+});
+
+
+// ===============================
+// CONFIRM RETURN & RESTOCK INVENTORY
+// ===============================
+router.put("/confirm-return/:order_id", (req, res) => {
+  const { order_id } = req.params;
+  const { received_date } = req.body;
+
+  // Format ISO string to MySQL compatible format (YYYY-MM-DD HH:MM:SS)
+  const formatForMySQL = (dateStr) => {
+    const d = dateStr ? new Date(dateStr) : new Date();
+    return d.toISOString().slice(0, 19).replace("T", " ");
+  };
+
+  const arrivalDate = formatForMySQL(received_date);
+
+  // 1. Update return status and arrival timestamp in 'returns'
+  const updateReturnSQL = `
+    UPDATE returns 
+    SET 
+      return_status = 'Received',
+      received_date = ?
+    WHERE order_id = ?
+  `;
+
+  db.query(updateReturnSQL, [arrivalDate, order_id], (err, updateResult) => {
+    if (err) {
+      console.error("❌ Update Returns Table Error:", err);
+      return res.status(500).json({ success: false, message: err.sqlMessage });
+    }
+
+    if (updateResult.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Return request not found for this order.",
+      });
+    }
+
+    // 2. Update shipping status in 'shipping'
+    const updateShippingSQL = `
+      UPDATE shipping 
+      SET shipping_status = 'Return Completed' 
+      WHERE order_id = ?
+    `;
+
+    db.query(updateShippingSQL, [order_id], (err) => {
+      if (err) {
+        console.error("❌ Update Shipping Status Error:", err);
+      }
+
+      // 3. Fetch line items to increase inventory
+      const fetchItemsSQL = `SELECT product_id, quantity FROM order_items WHERE order_id = ?`;
+
+      db.query(fetchItemsSQL, [order_id], (err, items) => {
+        if (err) {
+          console.error("❌ Fetch Order Items Error:", err);
+          return res.status(500).json({ success: false, message: err.sqlMessage });
+        }
+
+        if (!items || items.length === 0) {
+          return res.status(200).json({
+            success: true,
+            message: "Return confirmed, but no items found to restock.",
+            received_date: arrivalDate,
+          });
+        }
+
+        // 4. Increment stock quantity in 'products'
+        let completedUpdates = 0;
+        let hasErrored = false;
+
+        items.forEach((item) => {
+          const restockSQL = `UPDATE products SET stock = stock + ? WHERE product_id = ?`;
+
+          db.query(restockSQL, [item.quantity, item.product_id], (err) => {
+            if (err) {
+              console.error("❌ Restock Product Error:", err);
+              if (!hasErrored) {
+                hasErrored = true;
+                return res.status(500).json({ success: false, message: err.sqlMessage });
+              }
+              return;
+            }
+
+            completedUpdates++;
+
+            if (completedUpdates === items.length && !hasErrored) {
+              return res.status(200).json({
+                success: true,
+                message: "Order marked as received and inventory restocked successfully.",
+                received_date: arrivalDate,
+              });
+            }
+          });
+        });
+      });
+    });
+  });
 });
 
 module.exports = router;

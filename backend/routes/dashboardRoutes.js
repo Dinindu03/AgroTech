@@ -21,7 +21,7 @@ router.get("/summary", async (req, res) => {
     const [[{ activeOrders }]] = await db.query(`
       SELECT COUNT(*) AS activeOrders
       FROM shipping
-      WHERE shipping_status NOT IN ('Delivered', 'Cancelled')
+      WHERE shipping_status NOT IN ('Delivered', 'Cancelled' , 'Deactivated')
     `);
 
     // Gross Revenue

@@ -263,7 +263,7 @@ export default function Navbar({
               sx={{
                 display: { xs: "none", md: "flex" },
                 alignItems: "center",
-                gap: 0.5,
+                gap: 0,
               }}
             >
               {navItems.map((item) => (

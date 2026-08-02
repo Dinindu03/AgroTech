@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import axios from "axios";
 import Footer from "../components/Footer";
 import {
   Box,
@@ -10,6 +11,8 @@ import {
   Avatar,
   TextField,
   GlobalStyles,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -21,36 +24,25 @@ import SsidChartIcon from "@mui/icons-material/SsidChart";
 import WbSunnyIcon from "@mui/icons-material/WbSunny";
 import ArrowOutwardIcon from "@mui/icons-material/ArrowOutward";
 
-/* ---------------------------------------------------------------
-   DESIGN TOKENS — "Field & Ledger"
-   A working-farm palette (deep moss, soil, harvest gold) paired
-   with a data/instrument accent, since AgroTech sells both soil
-   and sensors. Display type uses a system serif stack (reads
-   organic, not manufactured). Body/labels use the system UI font
-   stack and a system monospace stack for the data/instrument feel.
-   No external font or image requests — everything resolves from
-   fonts already installed on the device, so this works fully
-   offline.
------------------------------------------------------------------- */
+
 const fontDisplay = "Georgia, 'Iowan Old Style', 'Palatino Linotype', Palatino, serif";
 const fontMono =
   "'SFMono-Regular', 'Consolas', 'Liberation Mono', Menlo, Monaco, monospace";
 const c = {
-  moss: "#16301F",      // deep moss — primary dark ground
+  moss: "#16301F",    
   mossMid: "#25492F",
-  sage: "#7FA06B",       // living leaf accent
-  gold: "#D9A441",       // harvest gold accent
+  sage: "#7FA06B",      
+  gold: "#D9A441",       
   goldDeep: "#B8842B",
-  soil: "#5B3E2B",       // soil brown for grounding text/rules
-  paper: "#F7F5EC",      // warm paper background (rice/husk tone)
+  soil: "#5B3E2B",       
+  paper: "#F7F5EC",      
   paperDeep: "#EFEBDC",
-  ink: "#1C2A1E",        // near-black green body text
+  ink: "#1C2A1E",        
   mist: "#EDEFE6",
 };
 
-/* Furrow divider — a signature motif standing in for plowed field
-   rows / contour terracing, used as the seam between sections
-   instead of a flat hairline. */
+const CONTACT_API_BASE = "http://localhost:5000/api/contact";
+
 function FurrowDivider({ fill = c.paper, flip = false }) {
   return (
     <Box
@@ -74,9 +66,47 @@ function FurrowDivider({ fill = c.paper, flip = false }) {
 
 function About() {
   const [formState, setFormState] = useState({ name: "", email: "", message: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
 
   const handleInputChange = (e) => {
     setFormState({ ...formState, [e.target.name]: e.target.value });
+  };
+
+  const showToast = (message, severity = "success") =>
+    setToast({ open: true, message, severity });
+
+  const handleSubmitMessage = async () => {
+    const { name, email, message } = formState;
+
+    if (!name || !email || !message) {
+      showToast("Please fill in all fields.", "error");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await axios.post(`${CONTACT_API_BASE}/message`, {
+        name,
+        email,
+        message,
+      });
+
+      if (res.data?.success) {
+        showToast(res.data?.message || "Message sent — we'll be in touch soon.");
+        setFormState({ name: "", email: "", message: "" });
+      } else {
+        showToast(res.data?.message || "Couldn't send message.", "error");
+      }
+    } catch (err) {
+      console.error("Contact form error:", err);
+      showToast(
+        err.response?.data?.message || "Couldn't reach the server. Try again.",
+        "error"
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -95,9 +125,6 @@ function About() {
         }}
       />
 
-      {/* ============================================================ */}
-      {/* HERO — VIDEO BACKGROUND                                       */}
-      {/* ============================================================ */}
       <Box
         sx={{
           position: "relative",
@@ -243,9 +270,7 @@ function About() {
         </Box>
       </Box>
 
-      {/* ============================================================ */}
-      {/* MISSION & VISION                                              */}
-      {/* ============================================================ */}
+     
       <Box sx={{ pt: { xs: 8, md: 10 }, pb: 12, background: c.paper }}>
         <Container maxWidth="lg">
           <Grid container spacing={4}>
@@ -313,9 +338,7 @@ function About() {
         </Container>
       </Box>
 
-      {/* ============================================================ */}
-      {/* STATS — FIELD READOUT                                         */}
-      {/* ============================================================ */}
+
       <Box sx={{ background: c.moss, py: { xs: 7, md: 8 } }}>
         <Container maxWidth="lg">
           <Box
@@ -366,9 +389,7 @@ function About() {
         </Container>
       </Box>
 
-      {/* ============================================================ */}
-      {/* BOARD MEMBERS                                                 */}
-      {/* ============================================================ */}
+  
       <Box sx={{ py: 12, background: c.paper }}>
         <Container maxWidth="lg">
           <Box sx={{ mb: 8, maxWidth: 560 }}>
@@ -391,12 +412,12 @@ function About() {
                 initials: "DA",
               },
               {
-                name: "Sarah Perera",
+                name: "Sadeepa Samarasinghe",
                 role: "Chief Technology Officer",
                 initials: "SP",
               },
               {
-                name: "David Silva",
+                name: "Chamuditha Gunasingh",
                 role: "Operations Director",
                 initials: "DS",
               },
@@ -583,6 +604,7 @@ function About() {
                         fullWidth
                         label="Your Name"
                         name="name"
+                        value={formState.name}
                         variant="outlined"
                         onChange={handleInputChange}
                         sx={{ background: c.paper }}
@@ -593,6 +615,7 @@ function About() {
                         fullWidth
                         label="Email Address"
                         name="email"
+                        value={formState.email}
                         variant="outlined"
                         onChange={handleInputChange}
                         sx={{ background: c.paper }}
@@ -603,6 +626,7 @@ function About() {
                         fullWidth
                         label="Message"
                         name="message"
+                        value={formState.message}
                         variant="outlined"
                         multiline
                         rows={4}
@@ -614,6 +638,8 @@ function About() {
                       <Button
                         fullWidth
                         variant="contained"
+                        disabled={submitting}
+                        onClick={handleSubmitMessage}
                         sx={{
                           py: 1.8,
                           background: c.moss,
@@ -624,7 +650,7 @@ function About() {
                           "&:hover": { background: c.mossMid },
                         }}
                       >
-                        Submit Message
+                        {submitting ? "Sending..." : "Submit Message"}
                       </Button>
                     </Grid>
                   </Grid>
@@ -635,7 +661,21 @@ function About() {
         </Box>
       </Box>
 
-     
+      <Snackbar
+        open={toast.open}
+        autoHideDuration={3500}
+        onClose={() => setToast((t) => ({ ...t, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setToast((t) => ({ ...t, open: false }))}
+          severity={toast.severity}
+          variant="filled"
+        >
+          {toast.message}
+        </Alert>
+      </Snackbar>
+
     </Box>
   );
 }

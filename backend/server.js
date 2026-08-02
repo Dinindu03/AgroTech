@@ -9,6 +9,8 @@ const adminRoutes = require("./routes/adminRoutes");
 const orderRoutes=require("./routes/orderRoutes");
 const shippingDetailsRoutes=require("./routes/shipping-detailsRoute");
 const dashboard =require("./routes/dashboardRoutes");
+const contactRoutes = require("./routes/contact");
+const updateProductRoute = require("./routes/updateproductRoute");
 
 
 
@@ -25,6 +27,11 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/shipping", shippingDetailsRoutes);
 app.use("/api/dashboard", dashboard);
+app.use("/api/contact", contactRoutes);
+app.use("/api/updateproducts", updateProductRoute);
+
+
+
 // Test Route
 app.get("/", (req, res) => {
   res.send("AgroTech Backend Running");

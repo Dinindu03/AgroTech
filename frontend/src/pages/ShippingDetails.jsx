@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -22,6 +22,9 @@ import {
   Rating,
   Snackbar,
   Alert,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from "@mui/material";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -29,13 +32,14 @@ import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import Inventory2Icon from "@mui/icons-material/Inventory2";
 import PaymentIcon from "@mui/icons-material/Payment";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
 import CancelIcon from "@mui/icons-material/Cancel";
+import BlockIcon from "@mui/icons-material/Block";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import RateReviewIcon from "@mui/icons-material/RateReview";
-import ReportProblemOutlinedIcon from "@mui/icons-material/ReportProblemOutlined";
 import AssignmentReturnOutlinedIcon from "@mui/icons-material/AssignmentReturnOutlined";
 
 // ── Design tokens — same manifest palette as Checkout / Navbar ─
@@ -72,8 +76,15 @@ function useManifestFonts() {
   }, []);
 }
 
+const TRACK_STEPS = ["Processing", "Packed", "Shipped", "Delivered"];
 
-const TRACK_STEPS = ["Processing", "Shipped", "Out for Delivery", "Delivered"];
+const DEACTIVATE_REASONS = [
+  "Changed my mind",
+  "Found a better price elsewhere",
+  "Ordered by mistake",
+  "Delivery is taking too long",
+  "Other",
+];
 
 function stepIndexFor(status) {
   if (!status) return 0;
@@ -159,16 +170,17 @@ export default function ShippingDetails() {
               : o
           )
         );
-        showToast("Delivery confirmed. Thanks for letting us know!");
-      } else {
-        showToast(res.data?.message || "Couldn't confirm delivery.", "error");
+        return true;
       }
+      showToast(res.data?.message || "Couldn't confirm delivery.", "error");
+      return false;
     } catch (err) {
       console.error("Confirm delivery error:", err);
       showToast(
         err.response?.data?.message || "Couldn't confirm delivery. Try again.",
         "error"
       );
+      return false;
     }
   };
 
@@ -191,69 +203,88 @@ export default function ShippingDetails() {
   };
 
   const handleSubmitReview = async (order, { rating, comment }) => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
     try {
-      const res = await axios.post(`${API_BASE}/review`, {
+      const res = await axios.post(`${API_BASE}/reviews/add`, {
         order_id: order.order_id,
-        rating,
-        comment,
+        user_email: user?.email,
+        rating: rating,
+        review: comment,
       });
-      if (res.data?.success) {
-        showToast("Review submitted — thank you!");
-      } else {
-        showToast(res.data?.message || "Couldn't submit review.", "error");
-      }
+
+      return res.data?.success;
     } catch (err) {
       console.error("Submit review error:", err);
       showToast(
-        err.response?.data?.message || "Couldn't submit review. Try again.",
+        err.response?.data?.message || "Couldn't submit review.",
         "error"
       );
-    }
-  };
-
-  const handleSubmitComplaint = async (order, { subject, message }) => {
-    try {
-      const res = await axios.post(`${API_BASE}/complaint`, {
-        order_id: order.order_id,
-        subject,
-        message,
-      });
-      if (res.data?.success) {
-        showToast("Complaint submitted. Our team will reach out shortly.");
-      } else {
-        showToast(res.data?.message || "Couldn't submit complaint.", "error");
-      }
-    } catch (err) {
-      console.error("Submit complaint error:", err);
-      showToast(
-        err.response?.data?.message || "Couldn't submit complaint. Try again.",
-        "error"
-      );
+      return false;
     }
   };
 
   const handleSubmitReturn = async (order, { reason }) => {
+    const user = JSON.parse(localStorage.getItem("user"));
+
     try {
       const res = await axios.post(`${API_BASE}/return`, {
         order_id: order.order_id,
+        user_email: user?.email,
+        reason,
+      });
+
+      if (res.data?.success) {
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.order_id === order.order_id
+              ? {
+                  ...o,
+                  shipping_status: "Return Requested",
+                }
+              : o
+          )
+        );
+        showToast("Return request submitted.");
+      }
+    } catch (err) {
+      showToast(
+        err.response?.data?.message || "Return request failed.",
+        "error"
+      );
+    }
+  };
+
+  const handleDeactivateOrder = async (order, { reason }) => {
+    try {
+      const res = await axios.put(`${API_BASE}/deactivate-order/${order.order_id}`, {
         reason,
       });
       if (res.data?.success) {
         setOrders((prev) =>
           prev.map((o) =>
-            o.order_id === order.order_id ? { ...o, shipping_status: "Return Requested" } : o
+            o.order_id === order.order_id
+              ? {
+                  ...o,
+                  shipping_status: "Deactivated",
+                  order_shipping_status: "Deactivated",
+                  is_active: false,
+                }
+              : o
           )
         );
-        showToast("Return request submitted.");
-      } else {
-        showToast(res.data?.message || "Couldn't submit return request.", "error");
+        showToast("Order deactivated.");
+        return true;
       }
+      showToast(res.data?.message || "Couldn't deactivate this order.", "error");
+      return false;
     } catch (err) {
-      console.error("Submit return error:", err);
+      console.error("Deactivate order error:", err);
       showToast(
-        err.response?.data?.message || "Couldn't submit return request. Try again.",
+        err.response?.data?.message || "Couldn't deactivate this order. Try again.",
         "error"
       );
+      return false;
     }
   };
 
@@ -371,8 +402,8 @@ export default function ShippingDetails() {
               onConfirmDelivery={handleConfirmDelivery}
               onDeleteOrder={handleDeleteOrder}
               onSubmitReview={handleSubmitReview}
-              onSubmitComplaint={handleSubmitComplaint}
               onSubmitReturn={handleSubmitReturn}
+              onDeactivateOrder={handleDeactivateOrder}
             />
           ))}
       </Container>
@@ -403,14 +434,22 @@ function OrderTrackingCard({
   onConfirmDelivery,
   onDeleteOrder,
   onSubmitReview,
-  onSubmitComplaint,
   onSubmitReturn,
+  onDeactivateOrder,
 }) {
   const status = (order.shipping_status || order.order_shipping_status || "").toLowerCase();
   const isCancelled = status === "cancelled";
+  const isDeactivated = status === "deactivated";
   const isDelivered = status === "delivered";
-  const isOutForDelivery = status === "out for delivery";
+  const isShipped = status === "shipped";
+
   const isReturnRequested = status === "return requested";
+  const isTerminal = isCancelled || isDeactivated;
+
+  // Deactivating is only allowed while the order hasn't shipped yet.
+  const canDeactivate =
+    (status === "processing" || status === "packed") && order.is_active !== false;
+
   const currentStep = stepIndexFor(order.shipping_status || order.order_shipping_status);
 
   const orderDate = order.order_date
@@ -427,9 +466,15 @@ function OrderTrackingCard({
 
   // Dialog state
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [confirmDeliveryOpen, setConfirmDeliveryOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
-  const [complaintOpen, setComplaintOpen] = useState(false);
+  const [reviewSuccessOpen, setReviewSuccessOpen] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+
+  const statusChipStyles = isCancelled || isDeactivated
+    ? { color: c.danger, bg: "rgba(214,69,69,0.08)", border: "rgba(214,69,69,0.4)" }
+    : { color: c.accent, bg: c.accentDim, border: c.borderStrong };
 
   return (
     <Card
@@ -441,6 +486,7 @@ function OrderTrackingCard({
         p: { xs: 2.5, sm: 3.5 },
         backgroundImage: "none",
         boxShadow: c.shadow,
+        opacity: isTerminal ? 0.75 : 1,
       }}
     >
       {/* HEADER */}
@@ -466,14 +512,16 @@ function OrderTrackingCard({
             ORDER #{order.order_id} · {orderDate}
           </Typography>
           <Typography sx={{ fontFamily: displayFont, fontWeight: 700, fontSize: "1.1rem", mt: 0.3 }}>
-            {order.shipping_ref || order.tracking_number || "Waybill pending"}
+            Tracking Number: {order.tracking_number || "Waybill pending"}
           </Typography>
         </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Chip
             icon={
-              isCancelled ? (
+              isDeactivated ? (
+                <BlockIcon sx={{ fontSize: 16 }} />
+              ) : isCancelled ? (
                 <CancelIcon sx={{ fontSize: 16 }} />
               ) : (
                 <LocalShippingIcon sx={{ fontSize: 16 }} />
@@ -484,9 +532,9 @@ function OrderTrackingCard({
               fontFamily: monoFont,
               fontWeight: 700,
               fontSize: "0.75rem",
-              color: isCancelled ? c.danger : c.accent,
-              bgcolor: isCancelled ? "rgba(214,69,69,0.08)" : c.accentDim,
-              border: `1px solid ${isCancelled ? "rgba(214,69,69,0.4)" : c.borderStrong}`,
+              color: statusChipStyles.color,
+              bgcolor: statusChipStyles.bg,
+              border: `1px solid ${statusChipStyles.border}`,
             }}
           />
 
@@ -534,9 +582,25 @@ function OrderTrackingCard({
       </Box>
 
       {/* TRACKING STEPPER */}
-      {!isCancelled && !isReturnRequested && (
+      {!isTerminal && !isReturnRequested && (
         <Box sx={{ mb: 3.5 }}>
           <TrackingStepper currentStep={currentStep} />
+        </Box>
+      )}
+
+      {isDeactivated && (
+        <Box
+          sx={{
+            mb: 3,
+            p: 1.6,
+            borderRadius: "10px",
+            bgcolor: "rgba(214,69,69,0.06)",
+            border: "1px solid rgba(214,69,69,0.25)",
+          }}
+        >
+          <Typography sx={{ fontSize: "0.82rem", color: c.danger }}>
+            You deactivated this order{order.deactivation_reason ? ` — ${order.deactivation_reason}` : ""}.
+          </Typography>
         </Box>
       )}
 
@@ -624,16 +688,16 @@ function OrderTrackingCard({
       )}
 
       {/* ACTIONS */}
-      {!isCancelled && (
+      {!isTerminal && (
         <>
           <Divider sx={{ borderStyle: "dashed", borderColor: c.border, my: 3 }} />
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.2 }}>
-            {isOutForDelivery && (
+            {isShipped && (
               <ActionButton
                 icon={<DoneAllIcon sx={{ fontSize: 16 }} />}
                 label="Confirm Delivery"
                 primary
-                onClick={() => onConfirmDelivery(order)}
+                onClick={() => setConfirmDeliveryOpen(true)}
               />
             )}
 
@@ -641,6 +705,7 @@ function OrderTrackingCard({
               <ActionButton
                 icon={<RateReviewIcon sx={{ fontSize: 16 }} />}
                 label="Leave a Review"
+                primary={!isShipped}
                 onClick={() => setReviewOpen(true)}
               />
             )}
@@ -653,12 +718,14 @@ function OrderTrackingCard({
               />
             )}
 
-            <ActionButton
-              icon={<ReportProblemOutlinedIcon sx={{ fontSize: 16 }} />}
-              label="Report a Problem"
-              danger
-              onClick={() => setComplaintOpen(true)}
-            />
+            {canDeactivate && (
+              <ActionButton
+                icon={<BlockIcon sx={{ fontSize: 16 }} />}
+                label="Deactivate Order"
+                danger
+                onClick={() => setDeactivateOpen(true)}
+              />
+            )}
           </Box>
         </>
       )}
@@ -677,22 +744,37 @@ function OrderTrackingCard({
         }}
       />
 
-      <ReviewDialog
-        open={reviewOpen}
-        onClose={() => setReviewOpen(false)}
-        onSubmit={(payload) => {
-          setReviewOpen(false);
-          onSubmitReview(order, payload);
+      {/* Step 1 — confirm the parcel actually arrived */}
+      <ConfirmDialog
+        open={confirmDeliveryOpen}
+        title="Confirm delivery?"
+        description="Let us know your parcel arrived so we can close out shipping. You'll be able to leave a quick review right after."
+        confirmLabel="Yes, it arrived"
+        onCancel={() => setConfirmDeliveryOpen(false)}
+        onConfirm={async () => {
+          setConfirmDeliveryOpen(false);
+          const ok = await onConfirmDelivery(order);
+          if (ok) setReviewOpen(true);
         }}
       />
 
-      <ComplaintDialog
-        open={complaintOpen}
-        onClose={() => setComplaintOpen(false)}
-        onSubmit={(payload) => {
-          setComplaintOpen(false);
-          onSubmitComplaint(order, payload);
+      {/* Step 2 — review modal */}
+      <ReviewDialog
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        onSubmit={async (payload) => {
+          const ok = await onSubmitReview(order, payload);
+          setReviewOpen(false);
+          if (ok) setReviewSuccessOpen(true);
         }}
+      />
+
+      {/* Step 3 — review success confirmation */}
+      <SuccessDialog
+        open={reviewSuccessOpen}
+        title="Review submitted"
+        description="Thanks for sharing your experience — it helps other buyers and our team both."
+        onClose={() => setReviewSuccessOpen(false)}
       />
 
       <ReturnDialog
@@ -701,6 +783,15 @@ function OrderTrackingCard({
         onSubmit={(payload) => {
           setReturnOpen(false);
           onSubmitReturn(order, payload);
+        }}
+      />
+
+      <DeactivateDialog
+        open={deactivateOpen}
+        onClose={() => setDeactivateOpen(false)}
+        onSubmit={(payload) => {
+          setDeactivateOpen(false);
+          onDeactivateOrder(order, payload);
         }}
       />
     </Card>
@@ -887,6 +978,23 @@ function ConfirmDialog({ open, title, description, confirmLabel, danger, onCance
   );
 }
 
+function SuccessDialog({ open, title, description, onClose }) {
+  return (
+    <Dialog open={open} onClose={onClose} PaperProps={{ sx: dialogPaperSx }} maxWidth="xs" fullWidth>
+      <DialogContent sx={{ textAlign: "center", pt: 4, pb: 1 }}>
+        <CheckCircleOutlineIcon sx={{ fontSize: 46, color: c.accent, mb: 1.5 }} />
+        <Typography sx={{ ...dialogTitleSx, mb: 0.8 }}>{title}</Typography>
+        <Typography sx={{ color: c.textMuted, fontSize: "0.86rem" }}>{description}</Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5, justifyContent: "center" }}>
+        <DialogActionBtn primary onClick={onClose}>
+          Done
+        </DialogActionBtn>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 function ReviewDialog({ open, onClose, onSubmit }) {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -897,7 +1005,7 @@ function ReviewDialog({ open, onClose, onSubmit }) {
 
   return (
     <Dialog open={open} onClose={handleClose} PaperProps={{ sx: dialogPaperSx }} maxWidth="xs" fullWidth>
-      <DialogTitle sx={dialogTitleSx}>Leave a review</DialogTitle>
+      <DialogTitle sx={dialogTitleSx}>Delivered! Leave a review?</DialogTitle>
       <DialogContent>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 0.5 }}>
           <Rating
@@ -916,7 +1024,7 @@ function ReviewDialog({ open, onClose, onSubmit }) {
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <DialogActionBtn onClick={handleClose}>Cancel</DialogActionBtn>
+        <DialogActionBtn onClick={handleClose}>Skip</DialogActionBtn>
         <DialogActionBtn
           primary
           onClick={() => {
@@ -924,54 +1032,7 @@ function ReviewDialog({ open, onClose, onSubmit }) {
             setComment("");
           }}
         >
-          Submit
-        </DialogActionBtn>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
-function ComplaintDialog({ open, onClose, onSubmit }) {
-  const [subject, setSubject] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleClose = () => {
-    onClose();
-  };
-
-  return (
-    <Dialog open={open} onClose={handleClose} PaperProps={{ sx: dialogPaperSx }} maxWidth="xs" fullWidth>
-      <DialogTitle sx={dialogTitleSx}>Report a problem</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 0.5 }}>
-          <TextField
-            label="Subject"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="Details"
-            multiline
-            minRows={3}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            fullWidth
-          />
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <DialogActionBtn onClick={handleClose}>Cancel</DialogActionBtn>
-        <DialogActionBtn
-          danger
-          disabled={!message.trim()}
-          onClick={() => {
-            onSubmit({ subject, message });
-            setSubject("");
-            setMessage("");
-          }}
-        >
-          Submit
+          Submit Review
         </DialogActionBtn>
       </DialogActions>
     </Dialog>
@@ -1010,6 +1071,74 @@ function ReturnDialog({ open, onClose, onSubmit }) {
           }}
         >
           Submit Request
+        </DialogActionBtn>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+function DeactivateDialog({ open, onClose, onSubmit }) {
+  const [reason, setReason] = useState(DEACTIVATE_REASONS[0]);
+  const [otherText, setOtherText] = useState("");
+
+  const isOther = reason === "Other";
+  const finalReasonValid = isOther ? otherText.trim().length > 0 : true;
+
+  const handleClose = () => {
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} PaperProps={{ sx: dialogPaperSx }} maxWidth="xs" fullWidth>
+      <DialogTitle sx={dialogTitleSx}>Deactivate this order?</DialogTitle>
+      <DialogContent>
+        <Typography sx={{ color: c.textMuted, fontSize: "0.85rem", mb: 2 }}>
+          This order hasn't shipped yet, so you can still pull it. Tell us why:
+        </Typography>
+
+        <RadioGroup value={reason} onChange={(e) => setReason(e.target.value)}>
+          {DEACTIVATE_REASONS.map((r) => (
+            <FormControlLabel
+              key={r}
+              value={r}
+              control={
+                <Radio
+                  size="small"
+                  sx={{
+                    color: c.border,
+                    "&.Mui-checked": { color: c.accent },
+                  }}
+                />
+              }
+              label={<Typography sx={{ fontSize: "0.88rem", color: c.text }}>{r}</Typography>}
+            />
+          ))}
+        </RadioGroup>
+
+        {isOther && (
+          <TextField
+            placeholder="Tell us a bit more"
+            value={otherText}
+            onChange={(e) => setOtherText(e.target.value)}
+            multiline
+            minRows={2}
+            fullWidth
+            sx={{ mt: 1 }}
+          />
+        )}
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActionBtn onClick={handleClose}>Keep Order</DialogActionBtn>
+        <DialogActionBtn
+          danger
+          disabled={!finalReasonValid}
+          onClick={() => {
+            onSubmit({ reason: isOther ? otherText.trim() : reason });
+            setReason(DEACTIVATE_REASONS[0]);
+            setOtherText("");
+          }}
+        >
+          Deactivate Order
         </DialogActionBtn>
       </DialogActions>
     </Dialog>

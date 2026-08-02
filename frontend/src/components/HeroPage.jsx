@@ -219,7 +219,7 @@ function HeroPage() {
                 </Button>
 
                 <Button
-                  onClick={() => navigate("/about")}
+                  onClick={() => navigate("/Smartfarming")}
                   variant="outlined"
                   sx={{
                     borderColor: "rgba(255,255,255,0.30)",
@@ -235,7 +235,7 @@ function HeroPage() {
                     },
                   }}
                 >
-                  Learn More
+                  Smart Farming 
                 </Button>
               </Box>
             </Box>
