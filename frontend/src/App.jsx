@@ -20,7 +20,7 @@ import DeliveredOrders from "./pages/ShippedOrders";
 import ReturnedOrders from "./pages/ReturnedOrders";
 import KHub from "./pages/KHub";
 import UpdateProductInfo from "./pages/UpdateProductInfo";
-import Smartfarming from "./pages/Smartfarming";
+import Smartfarming from "./pages/SmartFarming";
 
 function App() {
   // Global cart tracking
